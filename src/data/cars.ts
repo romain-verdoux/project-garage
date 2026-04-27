@@ -10,6 +10,7 @@ import belair from "@/assets/car-belair.jpg";
 export type CarType = "Coupé" | "Sedan" | "Cabriolet" | "Wagon" | "Hatchback";
 export type Decade = "20s" | "10s" | "00s" | "90s" | "80s" | "70s" | "60s" | "50s";
 export type Difficulty = "easy" | "medium" | "hard" | "extreme";
+export type CostLevel = "low" | "medium" | "high" | "extreme";
 
 export type Car = {
   id: string;
@@ -22,7 +23,7 @@ export type Car = {
   history: string;
   difficultyStars: 1 | 2 | 3 | 4 | 5;
   partsToFind: Difficulty;
-  costOfParts: Difficulty;
+  costOfParts: CostLevel;
   reliabilityStars: 1 | 2 | 3 | 4 | 5;
   mechanicalDifficulty: Difficulty;
   electronicDifficulty: Difficulty;

@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import type { Difficulty } from "@/data/cars";
+import type { Difficulty, CostLevel } from "@/data/cars";
 
 export function Stars({ value, max = 5 }: { value: number; max?: number }) {
   return (
@@ -21,15 +21,24 @@ const difficultyMap: Record<Difficulty, { label: string; color: string }> = {
   extreme: { label: "Extreme", color: "bg-red-700/15 text-red-800 border-red-800/40" },
 };
 
-const costMap: Record<Difficulty, { label: string; color: string }> = {
-  easy: { label: "Low", color: "bg-emerald-600/15 text-emerald-800 border-emerald-700/30" },
+const costMap: Record<CostLevel, { label: string; color: string }> = {
+  low: { label: "Low", color: "bg-emerald-600/15 text-emerald-800 border-emerald-700/30" },
   medium: { label: "Medium", color: "bg-amber-600/15 text-amber-800 border-amber-700/30" },
-  hard: { label: "High", color: "bg-orange-600/20 text-orange-900 border-orange-700/40" },
+  high: { label: "High", color: "bg-orange-600/20 text-orange-900 border-orange-700/40" },
   extreme: { label: "Extreme", color: "bg-red-700/15 text-red-800 border-red-800/40" },
 };
 
-export function DifficultyBadge({ value, kind = "difficulty" }: { value: Difficulty; kind?: "difficulty" | "cost" }) {
-  const m = (kind === "cost" ? costMap : difficultyMap)[value];
+export function DifficultyBadge({ value }: { value: Difficulty }) {
+  const m = difficultyMap[value];
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${m.color}`}>
+      {m.label}
+    </span>
+  );
+}
+
+export function CostBadge({ value }: { value: CostLevel }) {
+  const m = costMap[value];
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${m.color}`}>
       {m.label}
