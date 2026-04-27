@@ -119,7 +119,7 @@ function CarDetail() {
           <div className="mt-5">
             <p className="font-stencil text-xs uppercase text-muted-foreground tracking-wider mb-2">Known defects</p>
             <ul className="space-y-1.5">
-              {car.knownDefects.map((d) => (
+              {car.knownDefects.map((d: string) => (
                 <li key={d} className="flex gap-2 text-sm">
                   <span className="text-primary font-bold">✕</span>
                   <span>{d}</span>
