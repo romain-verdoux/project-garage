@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { ChevronDown, Check } from "lucide-react";
 import { cars, CAR_TYPES, PRICE_BUCKETS, DECADES, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import heroImg from "@/assets/hero-garage.jpg";
 
 export const Route = createFileRoute("/")({
@@ -14,7 +16,7 @@ export const Route = createFileRoute("/")({
   component: LibraryPage,
 });
 
-function FilterGroup<T extends string>({
+function FilterDropdown<T extends string>({
   title,
   options,
   selected,
@@ -25,28 +27,46 @@ function FilterGroup<T extends string>({
   selected: T[];
   onToggle: (v: T) => void;
 }) {
+  const count = selected.length;
   return (
-    <div>
-      <h3 className="font-display text-lg mb-3 border-b-2 border-foreground/15 pb-1">{title}</h3>
-      <div className="space-y-2">
-        {options.map((o) => {
-          const active = selected.includes(o.id);
-          return (
-            <button
-              key={o.id}
-              onClick={() => onToggle(o.id)}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium border transition-all ${
-                active
-                  ? "bg-primary text-primary-foreground border-primary shadow-[var(--shadow-stamp)]"
-                  : "bg-card border-foreground/15 hover:border-primary"
-              }`}
-            >
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-md border-2 text-sm font-medium transition-colors ${
+            count > 0
+              ? "bg-primary text-primary-foreground border-primary shadow-[var(--shadow-stamp)]"
+              : "bg-card border-foreground/15 hover:border-primary"
+          }`}
+        >
+          <span className="font-stencil uppercase tracking-wider text-xs">{title}</span>
+          {count > 0 && (
+            <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-background/20 text-xs font-bold">
+              {count}
+            </span>
+          )}
+          <ChevronDown className="h-4 w-4 opacity-70" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-2 bg-card border-2 border-foreground/15">
+        <div className="space-y-1">
+          {options.map((o) => {
+            const active = selected.includes(o.id);
+            return (
+              <button
+                key={o.id}
+                onClick={() => onToggle(o.id)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+              >
+                <span>{o.label}</span>
+                {active && <Check className="h-4 w-4" />}
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -104,43 +124,41 @@ function LibraryPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-10 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10">
-        {/* Filters */}
-        <aside className="space-y-8 lg:sticky lg:top-24 self-start">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-2xl">Filters</h2>
-            {hasFilters && (
-              <button
-                onClick={clearAll}
-                className="text-xs font-stencil uppercase text-primary hover:underline"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
-          <FilterGroup
+      <section className="mx-auto max-w-7xl px-6 py-10">
+        {/* Horizontal filter bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-8 pb-6 border-b-2 border-foreground/15">
+          <h2 className="font-display text-2xl mr-2">Filters</h2>
+          <FilterDropdown
             title="Body type"
             options={CAR_TYPES.map((t) => ({ id: t, label: t }))}
             selected={types}
             onToggle={(v) => toggle(types, setTypes, v)}
           />
-          <FilterGroup
+          <FilterDropdown
             title="Price"
             options={PRICE_BUCKETS.map((b) => ({ id: b.id, label: b.label }))}
             selected={prices}
             onToggle={(v) => toggle(prices, setPrices, v)}
           />
-          <FilterGroup
+          <FilterDropdown
             title="Decade"
             options={DECADES.map((d) => ({ id: d, label: `'${d}` }))}
             selected={decades}
             onToggle={(v) => toggle(decades, setDecades, v)}
           />
-        </aside>
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="ml-auto text-xs font-stencil uppercase text-primary hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
 
         {/* Results */}
         <div>
-          <div className="flex items-end justify-between mb-6 border-b-2 border-foreground/15 pb-3">
+          <div className="flex items-end justify-between mb-6">
             <h2 className="font-display text-3xl">
               {filtered.length} {filtered.length === 1 ? "car" : "cars"}
             </h2>
