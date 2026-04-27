@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
+import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 
@@ -63,6 +64,7 @@ function RootComponent() {
     <>
       <SiteHeader />
       <Outlet />
+      <Toaster richColors position="bottom-right" />
     </>
   );
 }
