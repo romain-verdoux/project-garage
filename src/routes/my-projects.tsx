@@ -53,7 +53,7 @@ function MyProjects() {
                 key={c.id}
                 className="bg-card border-2 border-foreground/15 rounded-lg overflow-hidden shadow-[var(--shadow-card)] flex flex-col"
               >
-                <Link to="/cars/$carId" params={{ carId: c.id }} className="block aspect-[3/2] overflow-hidden">
+                <Link to="/my-projects/$carId" params={{ carId: c.id }} className="block aspect-[3/2] overflow-hidden">
                   <img
                     src={c.image}
                     alt={c.name}
@@ -76,7 +76,7 @@ function MyProjects() {
                     ) : null}
                   </div>
                   <Link
-                    to="/cars/$carId"
+                    to="/my-projects/$carId"
                     params={{ carId: c.id }}
                     className="font-display text-2xl hover:text-primary leading-tight"
                   >
