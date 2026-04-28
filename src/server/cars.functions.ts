@@ -38,8 +38,18 @@ function slugify(s: string): string {
 
 async function uploadImage(imageUrl: string, slug: string): Promise<string | null> {
   try {
-    const res = await fetch(imageUrl);
-    if (!res.ok) return null;
+    const res = await fetch(imageUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+        Accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
+        Referer: "https://www.classicdriver.com/",
+      },
+    });
+    if (!res.ok) {
+      console.error(`[uploadImage] fetch failed ${res.status} for ${imageUrl}`);
+      return imageUrl;
+    }
     const ct = res.headers.get("content-type") ?? "image/jpeg";
     const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
     const buf = new Uint8Array(await res.arrayBuffer());
@@ -48,13 +58,14 @@ async function uploadImage(imageUrl: string, slug: string): Promise<string | nul
       .from("car-images")
       .upload(path, buf, { contentType: ct, upsert: false });
     if (error) {
-      console.error("Image upload failed:", error);
+      console.error("[uploadImage] storage upload failed:", error.message);
       return imageUrl;
     }
     const { data } = supabaseAdmin.storage.from("car-images").getPublicUrl(path);
+    console.log("[uploadImage] uploaded:", data.publicUrl);
     return data.publicUrl;
   } catch (e) {
-    console.error("Image fetch failed:", e);
+    console.error("[uploadImage] exception:", e);
     return imageUrl;
   }
 }
