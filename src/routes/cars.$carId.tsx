@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Plus } from "lucide-react";
 import { getCar } from "@/data/cars";
 import { Stars, DifficultyBadge, CostBadge, SpecRow } from "@/components/SpecRow";
 import { projectsStore, useProjects } from "@/lib/projects-store";
+import { FindMyCarDialog } from "@/components/FindMyCarDialog";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cars/$carId")({
