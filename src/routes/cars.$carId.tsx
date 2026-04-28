@@ -56,9 +56,13 @@ function CarDetail() {
   useProjects();
   const inList = projectsStore.has(car.id);
 
-  const handleToggle = () => {
-    projectsStore.toggle(car.id);
-    toast.success(inList ? `Removed ${car.name} from your projects` : `Added ${car.name} to your projects`);
+  const handleAdd = () => {
+    projectsStore.add(car.id);
+    toast.success(`Added ${car.name} to your projects`);
+  };
+  const handleRemove = () => {
+    projectsStore.remove(car.id);
+    toast.success(`Removed ${car.name} from your projects`);
   };
 
   return (
@@ -129,16 +133,21 @@ function CarDetail() {
             </ul>
           </div>
 
-          <button
-            onClick={handleToggle}
-            className={`mt-6 w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display text-xl tracking-wide transition-all shadow-[var(--shadow-stamp)] ${
-              inList
-                ? "bg-foreground text-background hover:bg-foreground/90"
-                : "bg-primary text-primary-foreground hover:bg-primary/90"
-            }`}
-          >
-            {inList ? (<><Check className="h-5 w-5" /> In your projects</>) : (<><Plus className="h-5 w-5" /> Add to my car projects</>)}
-          </button>
+          {inList ? (
+            <button
+              onClick={handleRemove}
+              className="mt-6 w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display text-xl tracking-wide transition-all shadow-[var(--shadow-stamp)] bg-foreground text-background hover:bg-foreground/90"
+            >
+              <Check className="h-5 w-5" /> In your projects
+            </button>
+          ) : (
+            <button
+              onClick={handleAdd}
+              className="mt-6 w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display text-xl tracking-wide transition-all shadow-[var(--shadow-stamp)] bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-5 w-5" /> Add to my car projects
+            </button>
+          )}
 
           <FindMyCarDialog car={car} />
         </aside>
