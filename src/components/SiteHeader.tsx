@@ -6,7 +6,7 @@ import { projectsStore } from "@/lib/projects-store";
 export function SiteHeader() {
   useProjects();
   const state = projectsStore.getAll();
-  const count = state.project.length + Object.keys(state.seeking).length;
+  const count = Object.keys(state.projects).length;
   return (
     <header className="border-b-2 border-foreground/15 bg-card/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">

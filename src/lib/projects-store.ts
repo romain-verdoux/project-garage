@@ -1,9 +1,9 @@
 // Local "My Car Projects" store backed by localStorage with subscription.
-// Two lists: "project" (cars added to restore) and "seeking" (alerts set).
+// Single unified list of projects. Each project may optionally have a "seeking" alert.
 import { useSyncExternalStore } from "react";
 
-const KEY = "my-car-projects-v2";
-const LEGACY_KEY = "my-car-projects-v1";
+const KEY = "my-car-projects-v3";
+const LEGACY_KEYS = ["my-car-projects-v2", "my-car-projects-v1"];
 
 export type SeekingAlert = {
   searchName: string;
@@ -16,70 +16,84 @@ export type SeekingAlert = {
 };
 
 export type ProjectsState = {
-  project: string[]; // car ids
-  seeking: Record<string, SeekingAlert>; // car id -> alert
+  // car id -> seeking alert (or null if added without alert)
+  projects: Record<string, SeekingAlert | null>;
 };
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
 function read(): ProjectsState {
-  if (typeof window === "undefined") return { project: [], seeking: {} };
+  if (typeof window === "undefined") return { projects: {} };
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        project: Array.isArray(parsed.project) ? parsed.project : [],
-        seeking: parsed.seeking && typeof parsed.seeking === "object" ? parsed.seeking : {},
+        projects:
+          parsed.projects && typeof parsed.projects === "object" ? parsed.projects : {},
       };
     }
+    // migrate from v2
+    const v2 = localStorage.getItem("my-car-projects-v2");
+    if (v2) {
+      const parsed = JSON.parse(v2);
+      const projects: Record<string, SeekingAlert | null> = {};
+      if (Array.isArray(parsed.project)) parsed.project.forEach((id: string) => (projects[id] = null));
+      if (parsed.seeking && typeof parsed.seeking === "object") {
+        Object.entries(parsed.seeking).forEach(([id, alert]) => {
+          projects[id] = alert as SeekingAlert;
+        });
+      }
+      return { projects };
+    }
     // migrate from v1
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy) {
-      const ids = JSON.parse(legacy);
-      if (Array.isArray(ids)) return { project: ids, seeking: {} };
+    const v1 = localStorage.getItem("my-car-projects-v1");
+    if (v1) {
+      const ids = JSON.parse(v1);
+      if (Array.isArray(ids)) {
+        const projects: Record<string, SeekingAlert | null> = {};
+        ids.forEach((id) => (projects[id] = null));
+        return { projects };
+      }
     }
   } catch {
     // ignore
   }
-  return { project: [], seeking: {} };
+  return { projects: {} };
 }
 
 function write(state: ProjectsState) {
   localStorage.setItem(KEY, JSON.stringify(state));
+  LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
   listeners.forEach((l) => l());
 }
 
 export const projectsStore = {
   getAll: read,
-  // project list
-  has: (id: string) => read().project.includes(id),
+  has: (id: string) => id in read().projects,
+  hasSeeking: (id: string) => Boolean(read().projects[id]),
+  getSeeking: (id: string) => read().projects[id] ?? null,
   add: (id: string) => {
     const cur = read();
-    if (!cur.project.includes(id)) write({ ...cur, project: [...cur.project, id] });
+    if (!(id in cur.projects)) {
+      write({ projects: { ...cur.projects, [id]: null } });
+    }
   },
   remove: (id: string) => {
     const cur = read();
-    write({ ...cur, project: cur.project.filter((x) => x !== id) });
+    const { [id]: _drop, ...rest } = cur.projects;
+    write({ projects: rest });
   },
-  toggle: (id: string) => {
+  setSeeking: (id: string, alert: SeekingAlert) => {
     const cur = read();
-    const next = cur.project.includes(id)
-      ? cur.project.filter((x) => x !== id)
-      : [...cur.project, id];
-    write({ ...cur, project: next });
+    write({ projects: { ...cur.projects, [id]: alert } });
   },
-  // seeking list
-  hasSeeking: (id: string) => Boolean(read().seeking[id]),
-  addSeeking: (id: string, alert: SeekingAlert) => {
+  clearSeeking: (id: string) => {
     const cur = read();
-    write({ ...cur, seeking: { ...cur.seeking, [id]: alert } });
-  },
-  removeSeeking: (id: string) => {
-    const cur = read();
-    const { [id]: _drop, ...rest } = cur.seeking;
-    write({ ...cur, seeking: rest });
+    if (id in cur.projects) {
+      write({ projects: { ...cur.projects, [id]: null } });
+    }
   },
   subscribe: (l: Listener) => {
     listeners.add(l);
