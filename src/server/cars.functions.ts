@@ -254,11 +254,24 @@ async function scrapeOne(url: string) {
     throw new Error("Scraped page is empty or too short");
   }
 
-  const sourceImage =
-    (metadata.ogImage as string | undefined) ??
+  // Classic Driver exposes the hero image via og:image. The Firecrawl SDK
+  // returns metadata with the literal key "og:image" (with the colon), and
+  // sometimes also as ogImage — check both, then fall back to the first
+  // non-data image found in the markdown.
+  let sourceImage: string | null =
     (metadata["og:image"] as string | undefined) ??
+    (metadata.ogImage as string | undefined) ??
+    (metadata["twitter:image"] as string | undefined) ??
     (metadata.twitterImage as string | undefined) ??
     null;
+
+  if (!sourceImage) {
+    const mdImg = [...markdown.matchAll(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g)]
+      .map((m) => m[1])
+      .find((u) => !u.includes("Base64") && !u.startsWith("data:"));
+    sourceImage = mdImg ?? null;
+  }
+  console.log("[scrapeOne] sourceImage:", sourceImage);
 
   const extracted = await aiExtract(markdown, url);
 
