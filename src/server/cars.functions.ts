@@ -191,9 +191,13 @@ export const discoverCarUrls = createServerFn({ method: "POST" })
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY is not configured");
 
     const fc = new Firecrawl({ apiKey: FIRECRAWL_API_KEY });
-    const result = await fc.map(data.url, {
-      limit: 5000,
-      includeSubdomains: false,
+    // Classic Driver search/listing pages are client-rendered, so `map` returns
+    // almost nothing useful. Use `scrape` with the `links` format + waitFor so
+    // the JS-rendered car cards are present when links are extracted.
+    const result = await fc.scrape(data.url, {
+      formats: ["links"],
+      onlyMainContent: false,
+      waitFor: 5000,
     });
 
     const rawLinks: unknown =
