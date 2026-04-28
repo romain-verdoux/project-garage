@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MyProjectsRouteImport } from './routes/my-projects'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MyProjectsIndexRouteImport } from './routes/my-projects.index'
 import { Route as MyProjectsCarIdRouteImport } from './routes/my-projects.$carId'
@@ -18,6 +20,16 @@ import { Route as LibraryCarIdRouteImport } from './routes/library.$carId'
 const MyProjectsRoute = MyProjectsRouteImport.update({
   id: '/my-projects',
   path: '/my-projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,6 +55,8 @@ const LibraryCarIdRoute = LibraryCarIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/my-projects': typeof MyProjectsRouteWithChildren
   '/library/$carId': typeof LibraryCarIdRoute
   '/my-projects/$carId': typeof MyProjectsCarIdRoute
@@ -50,6 +64,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/library/$carId': typeof LibraryCarIdRoute
   '/my-projects/$carId': typeof MyProjectsCarIdRoute
   '/my-projects': typeof MyProjectsIndexRoute
@@ -57,6 +73,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/my-projects': typeof MyProjectsRouteWithChildren
   '/library/$carId': typeof LibraryCarIdRoute
   '/my-projects/$carId': typeof MyProjectsCarIdRoute
@@ -66,15 +84,25 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/auth'
     | '/my-projects'
     | '/library/$carId'
     | '/my-projects/$carId'
     | '/my-projects/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/library/$carId' | '/my-projects/$carId' | '/my-projects'
+  to:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/library/$carId'
+    | '/my-projects/$carId'
+    | '/my-projects'
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/auth'
     | '/my-projects'
     | '/library/$carId'
     | '/my-projects/$carId'
@@ -83,6 +111,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AuthRoute: typeof AuthRoute
   MyProjectsRoute: typeof MyProjectsRouteWithChildren
   LibraryCarIdRoute: typeof LibraryCarIdRoute
 }
@@ -94,6 +124,20 @@ declare module '@tanstack/react-router' {
       path: '/my-projects'
       fullPath: '/my-projects'
       preLoaderRoute: typeof MyProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -143,18 +187,11 @@ const MyProjectsRouteWithChildren = MyProjectsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AuthRoute: AuthRoute,
   MyProjectsRoute: MyProjectsRouteWithChildren,
   LibraryCarIdRoute: LibraryCarIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

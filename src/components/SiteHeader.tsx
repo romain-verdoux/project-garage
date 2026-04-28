@@ -1,13 +1,22 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useProjects, projectsStore } from "@/lib/projects-store";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   useProjects();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const count = mounted ? Object.keys(projectsStore.getAll().projects).length : 0;
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/" });
+  }
 
   return (
     <header className="border-b-2 border-foreground/15 bg-card/80 backdrop-blur sticky top-0 z-30">
@@ -43,6 +52,30 @@ export function SiteHeader() {
               {count}
             </span>
           </Link>
+          {mounted && isAdmin && (
+            <Link
+              to="/admin"
+              activeProps={{ className: "text-primary" }}
+              className="hover:text-primary transition-colors uppercase tracking-wider"
+            >
+              Admin
+            </Link>
+          )}
+          {mounted && (user ? (
+            <button
+              onClick={signOut}
+              className="hover:text-primary transition-colors uppercase tracking-wider"
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="hover:text-primary transition-colors uppercase tracking-wider"
+            >
+              Sign in
+            </Link>
+          ))}
         </nav>
       </div>
     </header>
