@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import type { Car } from "@/data/cars";
+import { projectsStore } from "@/lib/projects-store";
 
 const AD_SOURCES = [
   { id: "leboncoin", label: "Leboncoin" },
