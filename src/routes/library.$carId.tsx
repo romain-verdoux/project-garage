@@ -3,7 +3,7 @@ import { getCar } from "@/data/cars";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { CarDetailView } from "@/components/CarDetailView";
 
-export const Route = createFileRoute("/cars/$carId")({
+export const Route = createFileRoute("/library/$carId")({
   loader: ({ params }) => {
     const car = getCar(params.carId);
     if (!car) throw notFound();
