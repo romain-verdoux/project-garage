@@ -4,11 +4,196 @@ import Firecrawl from "@mendable/firecrawl-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const InputSchema = z.object({
-  url: z.string().url().refine((u) => u.includes("classicdriver.com"), {
-    message: "URL must be from classicdriver.com",
-  }),
-});
+// =============================================================================
+// Per-site registry
+// =============================================================================
+// Each site declares:
+//   - hostMatch: substring(s) the URL must contain to be accepted
+//   - isDetailUrl: predicate identifying a single car/model detail page
+//   - discover: how to extract child detail URLs from a "parent" page
+//   - extractionHint: extra guidance appended to the AI system prompt
+// Adding a new source = add a new entry below.
+
+type SiteAdapter = {
+  id: string;
+  hostMatch: string[];
+  isDetailUrl: (url: string) => boolean;
+  // Optional: a custom discovery routine. Defaults to "scrape page, collect
+  // links, filter through isDetailUrl".
+  discover?: (fc: Firecrawl, url: string) => Promise<string[]>;
+  extractionHint?: string;
+};
+
+const classicDriverAdapter: SiteAdapter = {
+  id: "classicdriver",
+  hostMatch: ["classicdriver.com"],
+  isDetailUrl(u) {
+    try {
+      const url = new URL(u);
+      if (!url.hostname.includes("classicdriver.com")) return false;
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (parts.length < 6) return false;
+      const segment = parts[1]?.toLowerCase();
+      if (!["car", "auto", "voiture", "automobile"].includes(segment)) return false;
+      const last = parts[parts.length - 1];
+      return /^\d{3,}$/.test(last);
+    } catch {
+      return false;
+    }
+  },
+  async discover(fc, url) {
+    const result = await fc.scrape(url, {
+      formats: ["links"],
+      onlyMainContent: false,
+      waitFor: 5000,
+    });
+    return extractLinks(result);
+  },
+  extractionHint:
+    "This is a single dealer listing for a specific car. Use the listed asking price (convert to USD if needed). Use the model year of THIS car.",
+};
+
+const wikipediaAdapter: SiteAdapter = {
+  id: "wikipedia",
+  hostMatch: ["wikipedia.org"],
+  isDetailUrl(u) {
+    try {
+      const url = new URL(u);
+      if (!url.hostname.endsWith("wikipedia.org")) return false;
+      if (!url.pathname.startsWith("/wiki/")) return false;
+      const slug = decodeURIComponent(url.pathname.slice("/wiki/".length));
+      // Exclude meta / namespace pages
+      if (slug.includes(":")) return false;
+      if (slug.includes("#")) return false;
+      // Exclude obvious non-model pages by slug heuristics
+      const lower = slug.toLowerCase();
+      const blocklist = [
+        "list_of",
+        "history_of",
+        "_motor_company",
+        "_automobile",
+        "_automobiles",
+        "_motors",
+        "_ag",
+        "_se",
+        "_engine",
+        "_engines",
+        "_concept",
+        "_factory",
+        "_museum",
+        "_logo",
+        "_family",
+      ];
+      if (blocklist.some((b) => lower.endsWith(b) || lower.includes(b))) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  async discover(fc, url) {
+    // Wikipedia is server-rendered; no waitFor needed. Pull links + markdown so
+    // we can scope discovery to the manufacturer's model navbox/sections.
+    const result = await fc.scrape(url, {
+      formats: ["links", "markdown"],
+      onlyMainContent: true,
+    });
+
+    const allLinks = extractLinks(result);
+    const markdown =
+      (result as { markdown?: string }).markdown ??
+      (result as { data?: { markdown?: string } }).data?.markdown ??
+      "";
+
+    // Derive the make from the page URL: /wiki/Porsche -> "porsche"
+    const makeSlug = decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "")
+      .toLowerCase()
+      .split("_")[0];
+
+    // Keep only links to /wiki/<Make>_<something>, which is the standard
+    // Wikipedia naming convention for a manufacturer's models.
+    const candidates = allLinks
+      .map((l) => {
+        try {
+          const u = new URL(l);
+          if (!u.hostname.endsWith("wikipedia.org")) return null;
+          if (!u.pathname.startsWith("/wiki/")) return null;
+          const slug = decodeURIComponent(u.pathname.slice("/wiki/".length));
+          return { full: `${u.origin}${u.pathname}`, slug };
+        } catch {
+          return null;
+        }
+      })
+      .filter((x): x is { full: string; slug: string } => x !== null)
+      .filter(({ slug }) => {
+        const lower = slug.toLowerCase();
+        // Must mention the make in the slug
+        if (makeSlug && !lower.startsWith(makeSlug)) return false;
+        // Must look like Make_<Model>
+        if (!slug.includes("_")) return false;
+        return true;
+      });
+
+    // Boost links that appear in the markdown body (the navbox/lists are
+    // rendered as markdown links by Firecrawl) — this naturally restricts to
+    // the consumer-models section rather than every link on the page.
+    const inBody = new Set<string>();
+    for (const m of markdown.matchAll(/\]\((\/wiki\/[^)\s]+)\)/g)) {
+      inBody.add(m[1]);
+    }
+
+    const scored = candidates.map((c) => {
+      const path = new URL(c.full).pathname;
+      return { ...c, score: inBody.has(path) ? 2 : 1 };
+    });
+
+    // Dedupe + apply isDetailUrl filter for safety
+    const seen = new Set<string>();
+    const finalUrls: string[] = [];
+    for (const c of scored.sort((a, b) => b.score - a.score)) {
+      if (seen.has(c.full)) continue;
+      seen.add(c.full);
+      if (wikipediaAdapter.isDetailUrl(c.full)) finalUrls.push(c.full);
+    }
+    return finalUrls;
+  },
+  extractionHint:
+    "This is a Wikipedia article about a car MODEL (not a single car for sale). " +
+    "Set price to 0 (Wikipedia pages don't list prices). " +
+    "For 'year', use the year of the MOST ICONIC generation/variant of this model " +
+    "(the era enthusiasts most associate with it), not necessarily the original launch year. " +
+    "The 'history' field should summarize the model's history and significance. " +
+    "Pick 'type' based on the most iconic body style.",
+};
+
+const ADAPTERS: SiteAdapter[] = [classicDriverAdapter, wikipediaAdapter];
+
+function findAdapter(url: string): SiteAdapter | null {
+  return ADAPTERS.find((a) => a.hostMatch.some((h) => url.includes(h))) ?? null;
+}
+
+const SUPPORTED_HOSTS = ADAPTERS.flatMap((a) => a.hostMatch).join(", ");
+
+function extractLinks(result: unknown): string[] {
+  const r = result as { links?: unknown; data?: { links?: unknown } };
+  const raw = r.links ?? r.data?.links ?? [];
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((l) => (typeof l === "string" ? l : (l as { url?: string })?.url))
+    .filter((u): u is string => typeof u === "string");
+}
+
+// =============================================================================
+// Schemas
+// =============================================================================
+
+const SUPPORTED_URL = z
+  .string()
+  .url()
+  .refine((u) => findAdapter(u) !== null, {
+    message: `URL must be from a supported site (${SUPPORTED_HOSTS})`,
+  });
+
+const InputSchema = z.object({ url: SUPPORTED_URL });
 
 const ExtractedSchema = z.object({
   name: z.string().min(1).max(200),
@@ -25,6 +210,10 @@ const ExtractedSchema = z.object({
   electronic_difficulty: z.enum(["easy", "medium", "hard", "extreme"]),
   known_defects: z.array(z.string().min(2).max(200)).min(1).max(10),
 });
+
+// =============================================================================
+// Helpers
+// =============================================================================
 
 function slugify(s: string): string {
   return s
@@ -43,7 +232,7 @@ async function uploadImage(imageUrl: string, slug: string): Promise<string | nul
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
         Accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
-        Referer: "https://www.classicdriver.com/",
+        Referer: "https://www.google.com/",
       },
     });
     if (!res.ok) {
@@ -51,7 +240,7 @@ async function uploadImage(imageUrl: string, slug: string): Promise<string | nul
       return imageUrl;
     }
     const ct = res.headers.get("content-type") ?? "image/jpeg";
-    const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
+    const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : ct.includes("svg") ? "svg" : "jpg";
     const buf = new Uint8Array(await res.arrayBuffer());
     const path = `${slug}-${Date.now()}.${ext}`;
     const { error } = await supabaseAdmin.storage
@@ -70,7 +259,7 @@ async function uploadImage(imageUrl: string, slug: string): Promise<string | nul
   }
 }
 
-async function aiExtract(markdown: string, sourceUrl: string) {
+async function aiExtract(markdown: string, sourceUrl: string, hint?: string) {
   const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -86,7 +275,7 @@ async function aiExtract(markdown: string, sourceUrl: string) {
           year: { type: "integer" },
           type: { type: "string", enum: ["Coupé", "Sedan", "Cabriolet", "Wagon", "Hatchback"] },
           decade: { type: "string", enum: ["20s", "10s", "00s", "90s", "80s", "70s", "60s", "50s"] },
-          price: { type: "integer", description: "Price in USD; if EUR/GBP convert roughly; 0 if unknown" },
+          price: { type: "integer", description: "Price in USD; if EUR/GBP convert roughly; 0 if unknown or N/A" },
           history: { type: "string", description: "2-4 paragraph history of the model (not this specific car)" },
           difficulty_stars: { type: "integer", minimum: 1, maximum: 5, description: "Overall restoration difficulty" },
           reliability_stars: { type: "integer", minimum: 1, maximum: 5 },
@@ -112,6 +301,12 @@ async function aiExtract(markdown: string, sourceUrl: string) {
     },
   };
 
+  const systemBase =
+    "You are a classic-car expert. Extract a car entry from scraped content. " +
+    "Use your knowledge of the model to fill the rank fields and known defects accurately. " +
+    "Be concise and factual. Always call the save_car tool.";
+  const system = hint ? `${systemBase}\n\nSource-specific guidance:\n${hint}` : systemBase;
+
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -121,13 +316,7 @@ async function aiExtract(markdown: string, sourceUrl: string) {
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a classic-car expert. Extract a car listing from scraped content. " +
-            "Use your knowledge of the model to fill the rank fields and known defects accurately. " +
-            "Be concise and factual. Always call the save_car tool.",
-        },
+        { role: "system", content: system },
         {
           role: "user",
           content: `Source URL: ${sourceUrl}\n\nScraped content:\n\n${markdown.slice(0, 12000)}`,
@@ -163,34 +352,16 @@ async function assertAdmin(userId: string) {
   if (!roleRow) throw new Error("Admin role required");
 }
 
+// =============================================================================
+// Discovery
+// =============================================================================
+
 const MAX_DISCOVERY = 50;
 
 const DiscoverInputSchema = z.object({
-  url: z.string().url().refine((u) => u.includes("classicdriver.com"), {
-    message: "URL must be from classicdriver.com",
-  }),
+  url: SUPPORTED_URL,
   limit: z.number().int().min(1).max(MAX_DISCOVERY).optional().default(20),
 });
-
-// Match individual car detail pages on Classic Driver.
-// Examples:
-//   https://www.classicdriver.com/en/car/ford/mustang/1967/123456
-//   https://www.classicdriver.com/de/auto/porsche/911/1973/987654
-function isCarDetailUrl(u: string): boolean {
-  try {
-    const url = new URL(u);
-    if (!url.hostname.includes("classicdriver.com")) return false;
-    // path like /<lang>/(car|auto|voiture|automobile)/<make>/<model>/<year>/<id>
-    const parts = url.pathname.split("/").filter(Boolean);
-    if (parts.length < 6) return false;
-    const segment = parts[1]?.toLowerCase();
-    if (!["car", "auto", "voiture", "automobile"].includes(segment)) return false;
-    const last = parts[parts.length - 1];
-    return /^\d{3,}$/.test(last);
-  } catch {
-    return false;
-  }
-}
 
 export const discoverCarUrls = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -201,29 +372,24 @@ export const discoverCarUrls = createServerFn({ method: "POST" })
     const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY is not configured");
 
+    const adapter = findAdapter(data.url);
+    if (!adapter) throw new Error("Unsupported source URL");
+
     const fc = new Firecrawl({ apiKey: FIRECRAWL_API_KEY });
-    // Classic Driver search/listing pages are client-rendered, so `map` returns
-    // almost nothing useful. Use `scrape` with the `links` format + waitFor so
-    // the JS-rendered car cards are present when links are extracted.
-    const result = await fc.scrape(data.url, {
-      formats: ["links"],
-      onlyMainContent: false,
-      waitFor: 5000,
-    });
 
-    const rawLinks: unknown =
-      (result as { links?: unknown }).links ??
-      (result as { data?: { links?: unknown } }).data?.links ??
-      [];
-    const links: string[] = Array.isArray(rawLinks)
-      ? rawLinks
-          .map((l) => (typeof l === "string" ? l : (l as { url?: string })?.url))
-          .filter((u): u is string => typeof u === "string")
-      : [];
+    let candidateUrls: string[] = [];
+    if (adapter.discover) {
+      candidateUrls = await adapter.discover(fc, data.url);
+    } else {
+      const result = await fc.scrape(data.url, {
+        formats: ["links"],
+        onlyMainContent: false,
+      });
+      candidateUrls = extractLinks(result).filter(adapter.isDetailUrl);
+    }
 
-    const carUrls = Array.from(new Set(links.filter(isCarDetailUrl)));
+    const carUrls = Array.from(new Set(candidateUrls));
 
-    // Filter out URLs already imported
     const { data: existing } = await supabaseAdmin
       .from("cars")
       .select("source_url")
@@ -235,16 +401,20 @@ export const discoverCarUrls = createServerFn({ method: "POST" })
       total: carUrls.length,
       alreadyImported: carUrls.length - fresh.length,
       urls: fresh.slice(0, data.limit),
+      source: adapter.id,
     };
   });
 
-const ScrapeOneInputSchema = z.object({
-  url: z.string().url().refine((u) => u.includes("classicdriver.com")),
-});
+// =============================================================================
+// Single-page scrape
+// =============================================================================
 
 async function scrapeOne(url: string) {
   const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
   if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY is not configured");
+
+  const adapter = findAdapter(url);
+  if (!adapter) throw new Error("Unsupported source URL");
 
   const fc = new Firecrawl({ apiKey: FIRECRAWL_API_KEY });
   const scraped = await fc.scrape(url, {
@@ -265,10 +435,6 @@ async function scrapeOne(url: string) {
     throw new Error("Scraped page is empty or too short");
   }
 
-  // Classic Driver exposes the hero image via og:image. The Firecrawl SDK
-  // returns metadata with the literal key "og:image" (with the colon), and
-  // sometimes also as ogImage — check both, then fall back to the first
-  // non-data image found in the markdown.
   let sourceImage: string | null =
     (metadata["og:image"] as string | undefined) ??
     (metadata.ogImage as string | undefined) ??
@@ -284,7 +450,7 @@ async function scrapeOne(url: string) {
   }
   console.log("[scrapeOne] sourceImage:", sourceImage);
 
-  const extracted = await aiExtract(markdown, url);
+  const extracted = await aiExtract(markdown, url, adapter.extractionHint);
 
   const baseSlug = slugify(`${extracted.name}-${extracted.year}`);
   let slug = baseSlug;
@@ -329,6 +495,10 @@ async function scrapeOne(url: string) {
   return inserted;
 }
 
+// =============================================================================
+// Bulk + single server functions
+// =============================================================================
+
 const ScrapeManyInputSchema = z.object({
   urls: z.array(z.string().url()).min(1).max(MAX_DISCOVERY),
 });
@@ -340,7 +510,6 @@ export const scrapeManyCars = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
 
     const results: Array<{ url: string; ok: boolean; name?: string; slug?: string; error?: string }> = [];
-    // Sequential to avoid Firecrawl/AI rate limits
     for (const url of data.urls) {
       try {
         const car = await scrapeOne(url);
@@ -360,4 +529,3 @@ export const scrapeCarFromUrl = createServerFn({ method: "POST" })
     const car = await scrapeOne(data.url);
     return { car };
   });
-
