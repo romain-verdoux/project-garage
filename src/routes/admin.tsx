@@ -140,12 +140,12 @@ function AdminPage() {
         <TabsContent value="single">
           <form onSubmit={onSubmitSingle} className="space-y-4 rounded-lg border bg-card p-6">
             <div>
-              <Label htmlFor="url">Classic Driver listing URL</Label>
+              <Label htmlFor="url">Listing or model URL</Label>
               <Input
                 id="url"
                 type="url"
                 required
-                placeholder="https://www.classicdriver.com/en/car/..."
+                placeholder="https://en.wikipedia.org/wiki/Porsche_911 or https://www.classicdriver.com/en/car/..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
