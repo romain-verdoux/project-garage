@@ -4,7 +4,7 @@ import { cars } from "@/data/cars";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/my-projects")({
+export const Route = createFileRoute("/my-projects/")({
   head: () => ({
     meta: [
       { title: "My Car Projects — Garage Log" },
