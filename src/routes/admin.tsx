@@ -122,7 +122,13 @@ function AdminPage() {
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-4xl mb-2">Import cars</h1>
       <p className="text-muted-foreground mb-8">
-        Scrape Classic Driver to add cars to the library. Pick a single listing or a parent page (search results, make/model index) to auto-import every car under it.
+        Add cars to the library from a supported source. Single URL imports one car/model;
+        parent URL auto-imports every car/model linked from it.
+        <br />
+        <span className="text-xs">
+          Supported: <code>classicdriver.com</code> (dealer listings) ·{" "}
+          <code>wikipedia.org</code> (manufacturer page → all consumer models)
+        </span>
       </p>
 
       <Tabs defaultValue="single">
