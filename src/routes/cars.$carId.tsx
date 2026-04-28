@@ -139,6 +139,8 @@ function CarDetail() {
           >
             {inList ? (<><Check className="h-5 w-5" /> In your projects</>) : (<><Plus className="h-5 w-5" /> Add to my car projects</>)}
           </button>
+
+          <FindMyCarDialog car={car} />
         </aside>
       </div>
     </main>
