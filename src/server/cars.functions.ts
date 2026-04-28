@@ -196,10 +196,15 @@ export const discoverCarUrls = createServerFn({ method: "POST" })
       includeSubdomains: false,
     });
 
-    const links: string[] =
-      (result as { links?: string[] }).links ??
-      (result as { data?: { links?: string[] } }).data?.links ??
+    const rawLinks: unknown =
+      (result as { links?: unknown }).links ??
+      (result as { data?: { links?: unknown } }).data?.links ??
       [];
+    const links: string[] = Array.isArray(rawLinks)
+      ? rawLinks
+          .map((l) => (typeof l === "string" ? l : (l as { url?: string })?.url))
+          .filter((u): u is string => typeof u === "string")
+      : [];
 
     const carUrls = Array.from(new Set(links.filter(isCarDetailUrl)));
 
