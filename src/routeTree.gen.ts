@@ -13,7 +13,7 @@ import { Route as MyProjectsRouteImport } from './routes/my-projects'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MyProjectsIndexRouteImport } from './routes/my-projects.index'
 import { Route as MyProjectsCarIdRouteImport } from './routes/my-projects.$carId'
-import { Route as CarsCarIdRouteImport } from './routes/cars.$carId'
+import { Route as LibraryCarIdRouteImport } from './routes/library.$carId'
 
 const MyProjectsRoute = MyProjectsRouteImport.update({
   id: '/my-projects',
@@ -35,22 +35,22 @@ const MyProjectsCarIdRoute = MyProjectsCarIdRouteImport.update({
   path: '/$carId',
   getParentRoute: () => MyProjectsRoute,
 } as any)
-const CarsCarIdRoute = CarsCarIdRouteImport.update({
-  id: '/cars/$carId',
-  path: '/cars/$carId',
+const LibraryCarIdRoute = LibraryCarIdRouteImport.update({
+  id: '/library/$carId',
+  path: '/library/$carId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/my-projects': typeof MyProjectsRouteWithChildren
-  '/cars/$carId': typeof CarsCarIdRoute
+  '/library/$carId': typeof LibraryCarIdRoute
   '/my-projects/$carId': typeof MyProjectsCarIdRoute
   '/my-projects/': typeof MyProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/cars/$carId': typeof CarsCarIdRoute
+  '/library/$carId': typeof LibraryCarIdRoute
   '/my-projects/$carId': typeof MyProjectsCarIdRoute
   '/my-projects': typeof MyProjectsIndexRoute
 }
@@ -58,7 +58,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/my-projects': typeof MyProjectsRouteWithChildren
-  '/cars/$carId': typeof CarsCarIdRoute
+  '/library/$carId': typeof LibraryCarIdRoute
   '/my-projects/$carId': typeof MyProjectsCarIdRoute
   '/my-projects/': typeof MyProjectsIndexRoute
 }
@@ -67,16 +67,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/my-projects'
-    | '/cars/$carId'
+    | '/library/$carId'
     | '/my-projects/$carId'
     | '/my-projects/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cars/$carId' | '/my-projects/$carId' | '/my-projects'
+  to: '/' | '/library/$carId' | '/my-projects/$carId' | '/my-projects'
   id:
     | '__root__'
     | '/'
     | '/my-projects'
-    | '/cars/$carId'
+    | '/library/$carId'
     | '/my-projects/$carId'
     | '/my-projects/'
   fileRoutesById: FileRoutesById
@@ -84,7 +84,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MyProjectsRoute: typeof MyProjectsRouteWithChildren
-  CarsCarIdRoute: typeof CarsCarIdRoute
+  LibraryCarIdRoute: typeof LibraryCarIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -117,11 +117,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyProjectsCarIdRouteImport
       parentRoute: typeof MyProjectsRoute
     }
-    '/cars/$carId': {
-      id: '/cars/$carId'
-      path: '/cars/$carId'
-      fullPath: '/cars/$carId'
-      preLoaderRoute: typeof CarsCarIdRouteImport
+    '/library/$carId': {
+      id: '/library/$carId'
+      path: '/library/$carId'
+      fullPath: '/library/$carId'
+      preLoaderRoute: typeof LibraryCarIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -144,7 +144,7 @@ const MyProjectsRouteWithChildren = MyProjectsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MyProjectsRoute: MyProjectsRouteWithChildren,
-  CarsCarIdRoute: CarsCarIdRoute,
+  LibraryCarIdRoute: LibraryCarIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

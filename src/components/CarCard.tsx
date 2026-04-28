@@ -7,7 +7,7 @@ const fmt = (n: number) =>
 export function CarCard({ car }: { car: Car }) {
   return (
     <Link
-      to="/cars/$carId"
+      to="/library/$carId"
       params={{ carId: car.id }}
       className="group block bg-card border-2 border-foreground/10 rounded-lg overflow-hidden shadow-[var(--shadow-card)] hover:-translate-y-1 hover:border-primary transition-all duration-300"
     >
