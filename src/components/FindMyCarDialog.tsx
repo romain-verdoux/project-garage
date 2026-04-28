@@ -49,7 +49,16 @@ export function FindMyCarDialog({ car }: { car: Car }) {
       toast.error("Please fill in name, make and model");
       return;
     }
-    toast.success(`Alert set for "${searchName}". We'll start gathering ads.`);
+    projectsStore.addSeeking(car.id, {
+      searchName: searchName.trim(),
+      make: make.trim(),
+      model: model.trim(),
+      year: year.trim() || undefined,
+      sources,
+      notify,
+      createdAt: Date.now(),
+    });
+    toast.success(`Alert set for "${searchName}". Added to your Seeking list.`);
     setOpen(false);
   };
 
