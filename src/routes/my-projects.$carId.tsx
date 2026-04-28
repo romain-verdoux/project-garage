@@ -52,7 +52,7 @@ function ProjectCarDetail() {
 
   // If user landed here for a car not in projects (e.g. removed elsewhere), send to library detail.
   if (!projectsStore.has(car.id)) {
-    return <Navigate to="/cars/$carId" params={{ carId: car.id }} replace />;
+    return <Navigate to="/library/$carId" params={{ carId: car.id }} replace />;
   }
 
   return <CarDetailView car={car} context="projects" />;
