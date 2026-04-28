@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cars: {
+        Row: {
+          cost_of_parts: Database["public"]["Enums"]["car_cost_level"]
+          created_at: string
+          decade: Database["public"]["Enums"]["car_decade"]
+          difficulty_stars: number
+          electronic_difficulty: Database["public"]["Enums"]["car_difficulty"]
+          history: string
+          id: string
+          image_url: string | null
+          known_defects: string[]
+          mechanical_difficulty: Database["public"]["Enums"]["car_difficulty"]
+          name: string
+          parts_to_find: Database["public"]["Enums"]["car_difficulty"]
+          price: number
+          reliability_stars: number
+          slug: string
+          source_url: string | null
+          type: Database["public"]["Enums"]["car_type"]
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          cost_of_parts?: Database["public"]["Enums"]["car_cost_level"]
+          created_at?: string
+          decade: Database["public"]["Enums"]["car_decade"]
+          difficulty_stars?: number
+          electronic_difficulty?: Database["public"]["Enums"]["car_difficulty"]
+          history?: string
+          id?: string
+          image_url?: string | null
+          known_defects?: string[]
+          mechanical_difficulty?: Database["public"]["Enums"]["car_difficulty"]
+          name: string
+          parts_to_find?: Database["public"]["Enums"]["car_difficulty"]
+          price?: number
+          reliability_stars?: number
+          slug: string
+          source_url?: string | null
+          type: Database["public"]["Enums"]["car_type"]
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          cost_of_parts?: Database["public"]["Enums"]["car_cost_level"]
+          created_at?: string
+          decade?: Database["public"]["Enums"]["car_decade"]
+          difficulty_stars?: number
+          electronic_difficulty?: Database["public"]["Enums"]["car_difficulty"]
+          history?: string
+          id?: string
+          image_url?: string | null
+          known_defects?: string[]
+          mechanical_difficulty?: Database["public"]["Enums"]["car_difficulty"]
+          name?: string
+          parts_to_find?: Database["public"]["Enums"]["car_difficulty"]
+          price?: number
+          reliability_stars?: number
+          slug?: string
+          source_url?: string | null
+          type?: Database["public"]["Enums"]["car_type"]
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +88,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      car_cost_level: "low" | "medium" | "high" | "extreme"
+      car_decade: "20s" | "10s" | "00s" | "90s" | "80s" | "70s" | "60s" | "50s"
+      car_difficulty: "easy" | "medium" | "hard" | "extreme"
+      car_type: "Coupé" | "Sedan" | "Cabriolet" | "Wagon" | "Hatchback"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +218,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      car_cost_level: ["low", "medium", "high", "extreme"],
+      car_decade: ["20s", "10s", "00s", "90s", "80s", "70s", "60s", "50s"],
+      car_difficulty: ["easy", "medium", "hard", "extreme"],
+      car_type: ["Coupé", "Sedan", "Cabriolet", "Wagon", "Hatchback"],
+    },
   },
 } as const
