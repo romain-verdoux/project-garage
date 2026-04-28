@@ -1,6 +1,5 @@
-import { createFileRoute, Link, Navigate, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { getCar } from "@/data/cars";
-import { projectsStore, useProjects } from "@/lib/projects-store";
 import { CarDetailView } from "@/components/CarDetailView";
 
 export const Route = createFileRoute("/library/$carId")({
@@ -48,12 +47,5 @@ export const Route = createFileRoute("/library/$carId")({
 
 function CarDetail() {
   const { car } = Route.useLoaderData();
-  useProjects();
-
-  // If this car is already in the user's projects, the canonical URL is /my-projects/$carId.
-  if (projectsStore.has(car.id)) {
-    return <Navigate to="/my-projects/$carId" params={{ carId: car.id }} replace />;
-  }
-
   return <CarDetailView car={car} context="library" />;
 }
