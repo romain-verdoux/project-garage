@@ -122,7 +122,13 @@ function AdminPage() {
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-4xl mb-2">Import cars</h1>
       <p className="text-muted-foreground mb-8">
-        Scrape Classic Driver to add cars to the library. Pick a single listing or a parent page (search results, make/model index) to auto-import every car under it.
+        Add cars to the library from a supported source. Single URL imports one car/model;
+        parent URL auto-imports every car/model linked from it.
+        <br />
+        <span className="text-xs">
+          Supported: <code>classicdriver.com</code> (dealer listings) ·{" "}
+          <code>wikipedia.org</code> (manufacturer page → all consumer models)
+        </span>
       </p>
 
       <Tabs defaultValue="single">
@@ -134,12 +140,12 @@ function AdminPage() {
         <TabsContent value="single">
           <form onSubmit={onSubmitSingle} className="space-y-4 rounded-lg border bg-card p-6">
             <div>
-              <Label htmlFor="url">Classic Driver listing URL</Label>
+              <Label htmlFor="url">Listing or model URL</Label>
               <Input
                 id="url"
                 type="url"
                 required
-                placeholder="https://www.classicdriver.com/en/car/..."
+                placeholder="https://en.wikipedia.org/wiki/Porsche_911 or https://www.classicdriver.com/en/car/..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
@@ -162,17 +168,18 @@ function AdminPage() {
         <TabsContent value="bulk">
           <form onSubmit={onSubmitBulk} className="space-y-4 rounded-lg border bg-card p-6">
             <div>
-              <Label htmlFor="parentUrl">Parent URL (search results, make page, etc.)</Label>
+              <Label htmlFor="parentUrl">Parent URL (manufacturer page, search results…)</Label>
               <Input
                 id="parentUrl"
                 type="url"
                 required
-                placeholder="https://www.classicdriver.com/en/cars/search?..."
+                placeholder="https://en.wikipedia.org/wiki/Porsche"
                 value={parentUrl}
                 onChange={(e) => setParentUrl(e.target.value)}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                We'll discover every car detail page under this URL and import each one.
+                Wikipedia: paste a manufacturer page (e.g. <code>/wiki/Porsche</code>) to import every linked model.
+                Classic Driver: paste a search/listing URL.
               </p>
             </div>
             <div>
