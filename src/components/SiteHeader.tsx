@@ -1,12 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Wrench } from "lucide-react";
-import { useProjects } from "@/lib/projects-store";
-import { projectsStore } from "@/lib/projects-store";
+import { useEffect, useState } from "react";
+import { useProjects, projectsStore } from "@/lib/projects-store";
 
 export function SiteHeader() {
   useProjects();
-  const state = projectsStore.getAll();
-  const count = Object.keys(state.projects).length;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const count = mounted ? Object.keys(projectsStore.getAll().projects).length : 0;
+
   return (
     <header className="border-b-2 border-foreground/15 bg-card/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
@@ -34,7 +36,10 @@ export function SiteHeader() {
             className="hover:text-primary transition-colors uppercase tracking-wider flex items-center gap-2"
           >
             My Car Projects
-            <span className="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+            <span
+              suppressHydrationWarning
+              className="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-bold"
+            >
               {count}
             </span>
           </Link>
