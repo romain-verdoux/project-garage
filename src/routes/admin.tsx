@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars } from "@/server/cars.functions";
+import { importAllFromWikipedia } from "@/server/wikipedia-bulk.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
