@@ -1,5 +1,5 @@
-import { createFileRoute, useRouter, Await } from "@tanstack/react-router";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { CAR_TYPES, PRICE_BUCKETS, DECADES, type Car, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
