@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
-import { CAR_TYPES, PRICE_BUCKETS, DECADES, type CarType, type Decade } from "@/data/cars";
+import { CAR_TYPES, PRICE_BUCKETS, DECADES, type Car, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { listCars } from "@/server/cars-public.functions";
@@ -89,7 +89,7 @@ function FilterDropdown<T extends string>({
 }
 
 function LibraryPage() {
-  const cars = Route.useLoaderData();
+  const cars = Route.useLoaderData() as Car[];
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);

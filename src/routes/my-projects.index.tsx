@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Trash2, Bell } from "lucide-react";
 import { listCars } from "@/server/cars-public.functions";
+import type { Car } from "@/data/cars";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { toast } from "sonner";
 
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/my-projects/")({
 const fmt = (n: number) => `$${n.toLocaleString()}`;
 
 function MyProjects() {
-  const cars = Route.useLoaderData();
+  const cars = Route.useLoaderData() as Car[];
   useProjects();
   const state = projectsStore.getAll();
   const list = cars.filter((c) => c.id in state.projects);
