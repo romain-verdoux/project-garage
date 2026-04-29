@@ -28,6 +28,13 @@ function AdminPage() {
   const scrape = useServerFn(scrapeCarFromUrl);
   const discover = useServerFn(discoverCarUrls);
   const scrapeMany = useServerFn(scrapeManyCars);
+  const importAll = useServerFn(importAllFromWikipedia);
+
+  // Wiki one-shot mode
+  const [wikiUrl, setWikiUrl] = useState("");
+  const [wikiBusy, setWikiBusy] = useState(false);
+  const [wikiStatus, setWikiStatus] = useState("");
+  const [wikiResults, setWikiResults] = useState<BulkResult[]>([]);
 
   // Single mode
   const [url, setUrl] = useState("");
