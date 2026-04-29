@@ -109,7 +109,7 @@ function LibraryPage() {
   // Stream the rest in the background once available
   useEffect(() => {
     let cancelled = false;
-    restPromise.then((more) => {
+    restPromise.then((more: Car[]) => {
       if (!cancelled) setRest(more);
     });
     return () => { cancelled = true; };
