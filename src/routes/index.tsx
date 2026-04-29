@@ -221,11 +221,26 @@ function LibraryPage() {
               <p className="text-muted-foreground">Try clearing some filters to widen the search.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filtered.map((c) => (
-                <CarCard key={c.id} car={c} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {shown.map((c) => (
+                  <CarCard key={c.id} car={c} />
+                ))}
+              </div>
+              {canShowMore && (
+                <div className="flex justify-center mt-10">
+                  <button
+                    onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                    className="px-6 py-3 rounded-md border-2 border-foreground/15 bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground font-stencil uppercase tracking-wider text-sm transition-colors shadow-[var(--shadow-stamp)]"
+                  >
+                    Show more cars
+                    <span className="ml-2 opacity-70 normal-case font-sans">
+                      ({filtered.length - visible} left)
+                    </span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
