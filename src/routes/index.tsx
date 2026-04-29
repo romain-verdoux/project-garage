@@ -145,7 +145,6 @@ function LibraryPage() {
     setPrices([]);
     setDecades([]);
   };
-  const hasFilters = types.length + prices.length + decades.length > 0;
 
   return (
     <main>
