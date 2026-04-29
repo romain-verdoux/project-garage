@@ -163,11 +163,63 @@ function AdminPage() {
         </span>
       </p>
 
-      <Tabs defaultValue="single">
+      <Tabs defaultValue="wiki">
         <TabsList className="mb-4">
+          <TabsTrigger value="wiki">Wikipedia (one-click, all models)</TabsTrigger>
           <TabsTrigger value="single">Single URL</TabsTrigger>
-          <TabsTrigger value="bulk">Parent URL (auto-import all)</TabsTrigger>
+          <TabsTrigger value="bulk">Parent URL (Firecrawl)</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="wiki">
+          <form onSubmit={onSubmitWiki} className="space-y-4 rounded-lg border bg-card p-6">
+            <div>
+              <Label htmlFor="wikiUrl">Wikipedia manufacturer URL</Label>
+              <Input
+                id="wikiUrl"
+                type="url"
+                required
+                placeholder="https://en.wikipedia.org/wiki/Porsche"
+                value={wikiUrl}
+                onChange={(e) => setWikiUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Uses the MediaWiki API directly — no scraping. Discovers every consumer model
+                linked from the page (navboxes + Models/Production sections), fetches each summary
+                in parallel, and lets the AI fill restoration ratings. Up to 150 models per call.
+              </p>
+            </div>
+            <Button type="submit" disabled={wikiBusy} className="w-full">
+              {wikiBusy ? "Importing… (1–3 min for a full manufacturer)" : "Import all models"}
+            </Button>
+            {wikiStatus && <p className="text-sm text-muted-foreground">{wikiStatus}</p>}
+          </form>
+
+          {wikiResults.length > 0 && (
+            <div className="mt-6 rounded-lg border bg-card divide-y max-h-[500px] overflow-auto">
+              {wikiResults.map((r) => (
+                <div key={r.url} className="p-3 text-sm flex items-start gap-3">
+                  <span className={r.ok ? "text-green-600" : "text-destructive"}>
+                    {r.ok ? "✓" : "✗"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    {r.ok ? (
+                      <Link
+                        to="/library/$carId"
+                        params={{ carId: r.slug! }}
+                        className="text-primary underline"
+                      >
+                        {r.name}
+                      </Link>
+                    ) : (
+                      <span className="text-destructive">{r.error}</span>
+                    )}
+                    <p className="text-xs text-muted-foreground truncate">{r.url}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="single">
           <form onSubmit={onSubmitSingle} className="space-y-4 rounded-lg border bg-card p-6">
