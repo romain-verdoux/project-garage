@@ -126,7 +126,29 @@ function AdminPage() {
     }
   }
 
-  return (
+  async function onSubmitWiki(e: React.FormEvent) {
+    e.preventDefault();
+    setWikiBusy(true);
+    setWikiResults([]);
+    setWikiStatus("Fetching manufacturer page from Wikipedia API…");
+    try {
+      const res = await importAll({ data: { manufacturerUrl: wikiUrl } });
+      setWikiResults(res.results);
+      setWikiStatus(
+        `${res.makeName}: discovered ${res.discovered} models · skipped ${res.skipped} (already imported) · imported ${res.imported} · failed ${res.failed}.`,
+      );
+      if (res.imported > 0) toast.success(`Imported ${res.imported} cars`);
+      if (res.imported === 0 && res.failed === 0 && res.discovered === res.skipped) {
+        toast.info("Nothing new to import");
+      }
+      if (res.failed > 0) toast.error(`${res.failed} failed`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Wiki import failed");
+      setWikiStatus("Failed.");
+    } finally {
+      setWikiBusy(false);
+    }
+  }
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-4xl mb-2">Import cars</h1>
       <p className="text-muted-foreground mb-8">
