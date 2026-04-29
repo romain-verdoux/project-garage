@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
-import { cars, CAR_TYPES, PRICE_BUCKETS, DECADES, type CarType, type Decade } from "@/data/cars";
+import { CAR_TYPES, PRICE_BUCKETS, DECADES, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { listCars } from "@/server/cars-public.functions";
 import heroImg from "@/assets/hero-garage.jpg";
 
 export const Route = createFileRoute("/")({
@@ -13,7 +14,24 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Browse the library of car projects. Filter by type, price and decade." },
     ],
   }),
+  loader: () => listCars(),
   component: LibraryPage,
+  errorComponent: ({ error, reset }) => {
+    const router = useRouter();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+        <h1 className="font-display text-3xl mb-3">Couldn't load the library</h1>
+        <p className="text-muted-foreground mb-6">{error.message}</p>
+        <button
+          onClick={() => { router.invalidate(); reset(); }}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  },
+  notFoundComponent: () => <div className="p-12 text-center">Not found</div>,
 });
 
 function FilterDropdown<T extends string>({
@@ -71,6 +89,7 @@ function FilterDropdown<T extends string>({
 }
 
 function LibraryPage() {
+  const cars = Route.useLoaderData();
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);
@@ -91,7 +110,7 @@ function LibraryPage() {
       }
       return true;
     });
-  }, [types, prices, decades]);
+  }, [cars, types, prices, decades]);
 
   const clearAll = () => {
     setTypes([]);
@@ -164,7 +183,12 @@ function LibraryPage() {
             </h2>
             <span className="font-stencil text-xs uppercase text-muted-foreground">sorted by curator's pick</span>
           </div>
-          {filtered.length === 0 ? (
+          {cars.length === 0 ? (
+            <div className="border-2 border-dashed border-foreground/20 rounded-lg p-12 text-center">
+              <p className="font-display text-2xl mb-2">No cars in the library yet</p>
+              <p className="text-muted-foreground">Head to the admin page to import your first car.</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="border-2 border-dashed border-foreground/20 rounded-lg p-12 text-center">
               <p className="font-display text-2xl mb-2">No cars match those filters</p>
               <p className="text-muted-foreground">Try clearing some filters to widen the search.</p>

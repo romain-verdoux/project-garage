@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Trash2, Bell } from "lucide-react";
-import { cars } from "@/data/cars";
+import { listCars } from "@/server/cars-public.functions";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { toast } from "sonner";
 
@@ -11,12 +11,30 @@ export const Route = createFileRoute("/my-projects/")({
       { name: "description", content: "Your saved car restoration projects." },
     ],
   }),
+  loader: () => listCars(),
   component: MyProjects,
+  errorComponent: ({ error, reset }) => {
+    const router = useRouter();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+        <h1 className="font-display text-3xl mb-3">Couldn't load your projects</h1>
+        <p className="text-muted-foreground mb-6">{error.message}</p>
+        <button
+          onClick={() => { router.invalidate(); reset(); }}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  },
+  notFoundComponent: () => <div className="p-12 text-center">Not found</div>,
 });
 
 const fmt = (n: number) => `$${n.toLocaleString()}`;
 
 function MyProjects() {
+  const cars = Route.useLoaderData();
   useProjects();
   const state = projectsStore.getAll();
   const list = cars.filter((c) => c.id in state.projects);
