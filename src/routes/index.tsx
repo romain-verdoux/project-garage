@@ -1,11 +1,14 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { CAR_TYPES, PRICE_BUCKETS, DECADES, type Car, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { listCars } from "@/server/cars-public.functions";
+import { listCarsPage } from "@/server/cars-public.functions";
 import heroImg from "@/assets/hero-garage.jpg";
+
+const INITIAL_COUNT = 30;
+const PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,7 +17,14 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Browse the library of car projects. Filter by type, price and decade." },
     ],
   }),
-  loader: () => listCars(),
+  loader: async () => {
+    const initial = await listCarsPage({ data: { offset: 0, limit: INITIAL_COUNT } });
+    // Fire-and-forget the rest — streamed via <Await>
+    const restPromise = initial.length < INITIAL_COUNT
+      ? Promise.resolve([] as Car[])
+      : listCarsPage({ data: { offset: INITIAL_COUNT, limit: 1000 } }).catch(() => [] as Car[]);
+    return { initial, restPromise };
+  },
   component: LibraryPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
@@ -89,10 +99,23 @@ function FilterDropdown<T extends string>({
 }
 
 function LibraryPage() {
-  const cars = Route.useLoaderData() as Car[];
+  const { initial, restPromise } = Route.useLoaderData();
+  const [rest, setRest] = useState<Car[]>([]);
+  const [visible, setVisible] = useState(INITIAL_COUNT);
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);
+
+  // Stream the rest in the background once available
+  useEffect(() => {
+    let cancelled = false;
+    restPromise.then((more: Car[]) => {
+      if (!cancelled) setRest(more);
+    });
+    return () => { cancelled = true; };
+  }, [restPromise]);
+
+  const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
 
   const toggle = <T,>(arr: T[], setArr: (v: T[]) => void, v: T) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -112,12 +135,16 @@ function LibraryPage() {
     });
   }, [cars, types, prices, decades]);
 
+  // When filters are active, show all matches; otherwise paginate by `visible`
+  const hasFilters = types.length + prices.length + decades.length > 0;
+  const shown = hasFilters ? filtered : filtered.slice(0, visible);
+  const canShowMore = !hasFilters && visible < filtered.length;
+
   const clearAll = () => {
     setTypes([]);
     setPrices([]);
     setDecades([]);
   };
-  const hasFilters = types.length + prices.length + decades.length > 0;
 
   return (
     <main>
@@ -194,11 +221,26 @@ function LibraryPage() {
               <p className="text-muted-foreground">Try clearing some filters to widen the search.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filtered.map((c) => (
-                <CarCard key={c.id} car={c} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {shown.map((c) => (
+                  <CarCard key={c.id} car={c} />
+                ))}
+              </div>
+              {canShowMore && (
+                <div className="flex justify-center mt-10">
+                  <button
+                    onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                    className="px-6 py-3 rounded-md border-2 border-foreground/15 bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground font-stencil uppercase tracking-wider text-sm transition-colors shadow-[var(--shadow-stamp)]"
+                  >
+                    Show more cars
+                    <span className="ml-2 opacity-70 normal-case font-sans">
+                      ({filtered.length - visible} left)
+                    </span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
