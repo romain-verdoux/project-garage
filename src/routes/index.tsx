@@ -1,11 +1,14 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useRouter, Await } from "@tanstack/react-router";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { CAR_TYPES, PRICE_BUCKETS, DECADES, type Car, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { listCars } from "@/server/cars-public.functions";
+import { listCarsPage } from "@/server/cars-public.functions";
 import heroImg from "@/assets/hero-garage.jpg";
+
+const INITIAL_COUNT = 30;
+const PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,7 +17,14 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Browse the library of car projects. Filter by type, price and decade." },
     ],
   }),
-  loader: () => listCars(),
+  loader: async () => {
+    const initial = await listCarsPage({ data: { offset: 0, limit: INITIAL_COUNT } });
+    // Fire-and-forget the rest — streamed via <Await>
+    const restPromise = initial.length < INITIAL_COUNT
+      ? Promise.resolve([] as Car[])
+      : listCarsPage({ data: { offset: INITIAL_COUNT, limit: 1000 } }).catch(() => [] as Car[]);
+    return { initial, restPromise };
+  },
   component: LibraryPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
