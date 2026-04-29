@@ -56,6 +56,21 @@ export const listCars = createServerFn({ method: "GET" }).handler(async (): Prom
   return (data as unknown as CarRow[]).map(rowToCar);
 });
 
+export const listCarsPage = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ offset: z.number().int().min(0), limit: z.number().int().min(1).max(200) }).parse(data),
+  )
+  .handler(async ({ data }): Promise<Car[]> => {
+    const { offset, limit } = data;
+    const { data: rows, error } = await supabaseAdmin
+      .from("cars")
+      .select(CAR_COLUMNS)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) throw new Error(`Failed to load cars: ${error.message}`);
+    return (rows as unknown as CarRow[]).map(rowToCar);
+  });
+
 export const getCarBySlug = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Car | null> => {
