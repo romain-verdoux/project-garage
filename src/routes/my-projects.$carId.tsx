@@ -1,11 +1,11 @@
 import { createFileRoute, Link, Navigate, notFound, useRouter } from "@tanstack/react-router";
-import { getCar } from "@/data/cars";
+import { getCarBySlug } from "@/server/cars-public.functions";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { CarDetailView } from "@/components/CarDetailView";
 
 export const Route = createFileRoute("/my-projects/$carId")({
-  loader: ({ params }) => {
-    const car = getCar(params.carId);
+  loader: async ({ params }) => {
+    const car = await getCarBySlug({ data: { slug: params.carId } });
     if (!car) throw notFound();
     return { car };
   },
