@@ -99,10 +99,23 @@ function FilterDropdown<T extends string>({
 }
 
 function LibraryPage() {
-  const cars = Route.useLoaderData() as Car[];
+  const { initial, restPromise } = Route.useLoaderData();
+  const [rest, setRest] = useState<Car[]>([]);
+  const [visible, setVisible] = useState(INITIAL_COUNT);
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);
+
+  // Stream the rest in the background once available
+  useEffect(() => {
+    let cancelled = false;
+    restPromise.then((more) => {
+      if (!cancelled) setRest(more);
+    });
+    return () => { cancelled = true; };
+  }, [restPromise]);
+
+  const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
 
   const toggle = <T,>(arr: T[], setArr: (v: T[]) => void, v: T) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -121,6 +134,11 @@ function LibraryPage() {
       return true;
     });
   }, [cars, types, prices, decades]);
+
+  // When filters are active, show all matches; otherwise paginate by `visible`
+  const hasFilters = types.length + prices.length + decades.length > 0;
+  const shown = hasFilters ? filtered : filtered.slice(0, visible);
+  const canShowMore = !hasFilters && visible < filtered.length;
 
   const clearAll = () => {
     setTypes([]);
