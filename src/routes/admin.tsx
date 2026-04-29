@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars } from "@/server/cars.functions";
+import { importAllFromWikipedia } from "@/server/wikipedia-bulk.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,13 @@ function AdminPage() {
   const scrape = useServerFn(scrapeCarFromUrl);
   const discover = useServerFn(discoverCarUrls);
   const scrapeMany = useServerFn(scrapeManyCars);
+  const importAll = useServerFn(importAllFromWikipedia);
+
+  // Wiki one-shot mode
+  const [wikiUrl, setWikiUrl] = useState("");
+  const [wikiBusy, setWikiBusy] = useState(false);
+  const [wikiStatus, setWikiStatus] = useState("");
+  const [wikiResults, setWikiResults] = useState<BulkResult[]>([]);
 
   // Single mode
   const [url, setUrl] = useState("");
@@ -118,6 +126,30 @@ function AdminPage() {
     }
   }
 
+  async function onSubmitWiki(e: React.FormEvent) {
+    e.preventDefault();
+    setWikiBusy(true);
+    setWikiResults([]);
+    setWikiStatus("Fetching manufacturer page from Wikipedia API…");
+    try {
+      const res = await importAll({ data: { manufacturerUrl: wikiUrl } });
+      setWikiResults(res.results);
+      setWikiStatus(
+        `${res.makeName}: discovered ${res.discovered} models · skipped ${res.skipped} (already imported) · imported ${res.imported} · failed ${res.failed}.`,
+      );
+      if (res.imported > 0) toast.success(`Imported ${res.imported} cars`);
+      if (res.imported === 0 && res.failed === 0 && res.discovered === res.skipped) {
+        toast.info("Nothing new to import");
+      }
+      if (res.failed > 0) toast.error(`${res.failed} failed`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Wiki import failed");
+      setWikiStatus("Failed.");
+    } finally {
+      setWikiBusy(false);
+    }
+  }
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-4xl mb-2">Import cars</h1>
@@ -131,11 +163,63 @@ function AdminPage() {
         </span>
       </p>
 
-      <Tabs defaultValue="single">
+      <Tabs defaultValue="wiki">
         <TabsList className="mb-4">
+          <TabsTrigger value="wiki">Wikipedia (one-click, all models)</TabsTrigger>
           <TabsTrigger value="single">Single URL</TabsTrigger>
-          <TabsTrigger value="bulk">Parent URL (auto-import all)</TabsTrigger>
+          <TabsTrigger value="bulk">Parent URL (Firecrawl)</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="wiki">
+          <form onSubmit={onSubmitWiki} className="space-y-4 rounded-lg border bg-card p-6">
+            <div>
+              <Label htmlFor="wikiUrl">Wikipedia manufacturer URL</Label>
+              <Input
+                id="wikiUrl"
+                type="url"
+                required
+                placeholder="https://en.wikipedia.org/wiki/Porsche"
+                value={wikiUrl}
+                onChange={(e) => setWikiUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Uses the MediaWiki API directly — no scraping. Discovers every consumer model
+                linked from the page (navboxes + Models/Production sections), fetches each summary
+                in parallel, and lets the AI fill restoration ratings. Up to 150 models per call.
+              </p>
+            </div>
+            <Button type="submit" disabled={wikiBusy} className="w-full">
+              {wikiBusy ? "Importing… (1–3 min for a full manufacturer)" : "Import all models"}
+            </Button>
+            {wikiStatus && <p className="text-sm text-muted-foreground">{wikiStatus}</p>}
+          </form>
+
+          {wikiResults.length > 0 && (
+            <div className="mt-6 rounded-lg border bg-card divide-y max-h-[500px] overflow-auto">
+              {wikiResults.map((r) => (
+                <div key={r.url} className="p-3 text-sm flex items-start gap-3">
+                  <span className={r.ok ? "text-green-600" : "text-destructive"}>
+                    {r.ok ? "✓" : "✗"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    {r.ok ? (
+                      <Link
+                        to="/library/$carId"
+                        params={{ carId: r.slug! }}
+                        className="text-primary underline"
+                      >
+                        {r.name}
+                      </Link>
+                    ) : (
+                      <span className="text-destructive">{r.error}</span>
+                    )}
+                    <p className="text-xs text-muted-foreground truncate">{r.url}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="single">
           <form onSubmit={onSubmitSingle} className="space-y-4 rounded-lg border bg-card p-6">
