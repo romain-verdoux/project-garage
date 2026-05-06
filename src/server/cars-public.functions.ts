@@ -71,6 +71,25 @@ export const listCarsPage = createServerFn({ method: "GET" })
     return (rows as unknown as CarRow[]).map(rowToCar);
   });
 
+export const updateCarField = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        field: z.enum(["name", "make", "type", "price", "year", "decade"]),
+        value: z.union([z.string(), z.number()]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { error } = await supabaseAdmin
+      .from("cars")
+      .update({ [data.field]: data.value })
+      .eq("id", data.id);
+    if (error) throw new Error(`Failed to update car: ${error.message}`);
+    return { ok: true };
+  });
+
 export const deleteCarById = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
