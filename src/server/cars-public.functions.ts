@@ -46,7 +46,7 @@ function rowToCar(row: CarRow): Car {
 }
 
 const CAR_COLUMNS =
-  "id,slug,name,image_url,type,price,year,decade,history,difficulty_stars,parts_to_find,cost_of_parts,reliability_stars,mechanical_difficulty,electronic_difficulty,known_defects";
+  "id,slug,name,make,image_url,type,price,year,decade,history,difficulty_stars,parts_to_find,cost_of_parts,reliability_stars,mechanical_difficulty,electronic_difficulty,known_defects";
 
 export const listCars = createServerFn({ method: "GET" }).handler(async (): Promise<Car[]> => {
   const { data, error } = await supabaseAdmin
