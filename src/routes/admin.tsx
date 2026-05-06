@@ -328,6 +328,54 @@ function AdminPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* ── Car library management ── */}
+      <section className="mt-16">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-2xl">Library ({cars.length} cars)</h2>
+          <Button variant="outline" size="sm" onClick={loadCars} disabled={carsLoading}>
+            {carsLoading ? "Loading…" : cars.length ? "Refresh" : "Load list"}
+          </Button>
+        </div>
+
+        {cars.length > 0 && (
+          <div className="rounded-lg border bg-card max-h-[500px] overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="w-24 text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cars.map((car) => (
+                  <TableRow key={car.id}>
+                    <TableCell className="font-medium">{car.name}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          if (!confirm(`Delete "${car.name}"?`)) return;
+                          try {
+                            await deleteCar({ data: { id: car.id } });
+                            setCars((prev) => prev.filter((c) => c.id !== car.id));
+                            toast.success(`Deleted "${car.name}"`);
+                          } catch {
+                            toast.error("Failed to delete car");
+                          }
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
     </main>
   );
 }
