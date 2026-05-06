@@ -66,6 +66,7 @@ export const cars: Car[] = [
   {
     id: "porsche-911-72",
     name: "Porsche 911 T",
+    make: "Porsche",
     image: porsche,
     type: "Coupé",
     price: 120_000,
@@ -84,6 +85,7 @@ export const cars: Car[] = [
   {
     id: "bmw-e30",
     name: "BMW 325i (E30)",
+    make: "BMW",
     image: e30,
     type: "Sedan",
     price: 22_000,
@@ -102,6 +104,7 @@ export const cars: Car[] = [
   {
     id: "pagoda-65",
     name: "Mercedes-Benz 230 SL Pagoda",
+    make: "Mercedes-Benz",
     image: pagoda,
     type: "Cabriolet",
     price: 145_000,
@@ -120,6 +123,7 @@ export const cars: Car[] = [
   {
     id: "volvo-240",
     name: "Volvo 240 Wagon",
+    make: "Volvo",
     image: volvo,
     type: "Wagon",
     price: 9_500,
@@ -138,6 +142,7 @@ export const cars: Car[] = [
   {
     id: "golf-gti-mk3",
     name: "Volkswagen Golf GTI Mk3",
+    make: "Volkswagen",
     image: golf,
     type: "Hatchback",
     price: 8_000,
@@ -156,6 +161,7 @@ export const cars: Car[] = [
   {
     id: "audi-rs4-b7",
     name: "Audi RS4 (B7)",
+    make: "Audi",
     image: rs4,
     type: "Sedan",
     price: 42_000,
