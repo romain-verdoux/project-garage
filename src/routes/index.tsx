@@ -183,6 +183,12 @@ function LibraryPage() {
         <div className="flex flex-wrap items-center gap-3 mb-8 pb-6 border-b-2 border-foreground/15">
           <h2 className="font-display text-2xl mr-2">Filters</h2>
           <FilterDropdown
+            title="Make"
+            options={allMakes.map((m) => ({ id: m, label: m }))}
+            selected={makes}
+            onToggle={(v) => toggle(makes, setMakes, v)}
+          />
+          <FilterDropdown
             title="Body type"
             options={CAR_TYPES.map((t) => ({ id: t, label: t }))}
             selected={types}
