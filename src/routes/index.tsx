@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
     // Fire-and-forget the rest — streamed via <Await>
     const restPromise = initial.length < INITIAL_COUNT
       ? Promise.resolve([] as Car[])
-      : listCarsPage({ data: { offset: INITIAL_COUNT, limit: 1000 } }).catch(() => [] as Car[]);
+      : listCarsPage({ data: { offset: INITIAL_COUNT, limit: 200 } }).catch(() => [] as Car[]);
     return { initial, restPromise };
   },
   component: LibraryPage,
