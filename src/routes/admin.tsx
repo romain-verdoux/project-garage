@@ -208,6 +208,7 @@ function AdminPage() {
       toast.success(`Imported "${result.car.name}"`);
       setLastSlug(result.car.slug);
       setUrl("");
+      loadCars();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Scrape failed");
     } finally {
