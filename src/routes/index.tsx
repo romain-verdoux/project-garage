@@ -105,6 +105,7 @@ function LibraryPage() {
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);
+  const [makes, setMakes] = useState<string[]>([]);
 
   // Stream the rest in the background once available
   useEffect(() => {
@@ -117,11 +118,17 @@ function LibraryPage() {
 
   const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
 
+  const allMakes = useMemo(() => {
+    const set = new Set(cars.map((c) => c.name.split(/\s+/)[0]));
+    return Array.from(set).sort();
+  }, [cars]);
+
   const toggle = <T,>(arr: T[], setArr: (v: T[]) => void, v: T) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const filtered = useMemo(() => {
     return cars.filter((c) => {
+      if (makes.length && !makes.some((m) => c.name.startsWith(m))) return false;
       if (types.length && !types.includes(c.type)) return false;
       if (decades.length && !decades.includes(c.decade)) return false;
       if (prices.length) {
@@ -133,14 +140,15 @@ function LibraryPage() {
       }
       return true;
     });
-  }, [cars, types, prices, decades]);
+  }, [cars, makes, types, prices, decades]);
 
   // When filters are active, show all matches; otherwise paginate by `visible`
-  const hasFilters = types.length + prices.length + decades.length > 0;
+  const hasFilters = makes.length + types.length + prices.length + decades.length > 0;
   const shown = hasFilters ? filtered : filtered.slice(0, visible);
   const canShowMore = !hasFilters && visible < filtered.length;
 
   const clearAll = () => {
+    setMakes([]);
     setTypes([]);
     setPrices([]);
     setDecades([]);
@@ -174,6 +182,12 @@ function LibraryPage() {
         {/* Horizontal filter bar */}
         <div className="flex flex-wrap items-center gap-3 mb-8 pb-6 border-b-2 border-foreground/15">
           <h2 className="font-display text-2xl mr-2">Filters</h2>
+          <FilterDropdown
+            title="Make"
+            options={allMakes.map((m) => ({ id: m, label: m }))}
+            selected={makes}
+            onToggle={(v) => toggle(makes, setMakes, v)}
+          />
           <FilterDropdown
             title="Body type"
             options={CAR_TYPES.map((t) => ({ id: t, label: t }))}
