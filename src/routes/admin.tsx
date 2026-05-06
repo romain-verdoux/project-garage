@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars } from "@/server/cars.functions";
 import { importAllFromWikipedia } from "@/server/wikipedia-bulk.functions";
+import { listCarsAdmin, deleteCarById } from "@/server/cars-public.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
