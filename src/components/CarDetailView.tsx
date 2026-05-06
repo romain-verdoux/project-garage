@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Plus } from "lucide-react";
 import { Stars, DifficultyBadge, CostBadge, SpecRow } from "@/components/SpecRow";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { FindMyCarDialog } from "@/components/FindMyCarDialog";
+import { MarketplaceLinks } from "@/components/MarketplaceLinks";
 import { toast } from "sonner";
 import type { Car } from "@/data/cars";
 
