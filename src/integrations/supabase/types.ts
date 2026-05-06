@@ -25,6 +25,7 @@ export type Database = {
           id: string
           image_url: string | null
           known_defects: string[]
+          make: string
           mechanical_difficulty: Database["public"]["Enums"]["car_difficulty"]
           name: string
           parts_to_find: Database["public"]["Enums"]["car_difficulty"]
@@ -46,6 +47,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           known_defects?: string[]
+          make?: string
           mechanical_difficulty?: Database["public"]["Enums"]["car_difficulty"]
           name: string
           parts_to_find?: Database["public"]["Enums"]["car_difficulty"]
@@ -67,6 +69,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           known_defects?: string[]
+          make?: string
           mechanical_difficulty?: Database["public"]["Enums"]["car_difficulty"]
           name?: string
           parts_to_find?: Database["public"]["Enums"]["car_difficulty"]
