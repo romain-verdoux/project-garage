@@ -148,6 +148,7 @@ function LibraryPage() {
   const canShowMore = !hasFilters && visible < filtered.length;
 
   const clearAll = () => {
+    setMakes([]);
     setTypes([]);
     setPrices([]);
     setDecades([]);
