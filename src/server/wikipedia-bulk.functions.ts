@@ -417,6 +417,7 @@ export const importAllFromWikipedia = createServerFn({ method: "POST" })
         const { error: insertErr } = await supabaseAdmin.from("cars").insert({
           slug,
           name: extracted.name,
+          make: makeName,
           year: extracted.year,
           type: extracted.type,
           decade: extracted.decade,

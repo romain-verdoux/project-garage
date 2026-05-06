@@ -473,6 +473,7 @@ async function scrapeOne(url: string) {
     .insert({
       slug,
       name: extracted.name,
+      make: extracted.name.split(" ")[0],
       year: extracted.year,
       type: extracted.type,
       decade: extracted.decade,

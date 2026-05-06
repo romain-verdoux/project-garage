@@ -208,6 +208,7 @@ function AdminPage() {
       toast.success(`Imported "${result.car.name}"`);
       setLastSlug(result.car.slug);
       setUrl("");
+      loadCars();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Scrape failed");
     } finally {
@@ -241,7 +242,7 @@ function AdminPage() {
       const ok = results.filter((r) => r.ok).length;
       const failed = results.length - ok;
       setBulkStatus(`Done. Imported ${ok}, failed ${failed}.`);
-      if (ok > 0) toast.success(`Imported ${ok} cars`);
+      if (ok > 0) { toast.success(`Imported ${ok} cars`); loadCars(); }
       if (failed > 0) toast.error(`${failed} failed`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Bulk scrape failed");
@@ -262,7 +263,7 @@ function AdminPage() {
       setWikiStatus(
         `${res.makeName}: discovered ${res.discovered} models · skipped ${res.skipped} (already imported) · imported ${res.imported} · failed ${res.failed}.`,
       );
-      if (res.imported > 0) toast.success(`Imported ${res.imported} cars`);
+      if (res.imported > 0) { toast.success(`Imported ${res.imported} cars`); loadCars(); }
       if (res.imported === 0 && res.failed === 0 && res.discovered === res.skipped) {
         toast.info("Nothing new to import");
       }
