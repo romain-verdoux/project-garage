@@ -71,6 +71,26 @@ export const listCarsPage = createServerFn({ method: "GET" })
     return (rows as unknown as CarRow[]).map(rowToCar);
   });
 
+export const deleteCarById = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { error } = await supabaseAdmin.from("cars").delete().eq("id", data.id);
+    if (error) throw new Error(`Failed to delete car: ${error.message}`);
+    return { ok: true };
+  });
+
+export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ id: string; name: string }[]> => {
+    const { data, error } = await supabaseAdmin
+      .from("cars")
+      .select("id,name")
+      .order("name", { ascending: true })
+      .limit(2000);
+    if (error) throw new Error(`Failed to load cars: ${error.message}`);
+    return data as { id: string; name: string }[];
+  },
+);
+
 export const getCarBySlug = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Car | null> => {
