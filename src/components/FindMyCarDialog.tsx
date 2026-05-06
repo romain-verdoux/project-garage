@@ -38,6 +38,7 @@ export function FindMyCarDialog({ car }: { car: Car }) {
   const [make, setMake] = useState(defaults.make);
   const [model, setModel] = useState(defaults.model);
   const [year, setYear] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<number>(car.price);
   const [sources, setSources] = useState<string[]>([]);
   const [notify, setNotify] = useState<"mail" | "whatsapp" | "none">("none");
 
