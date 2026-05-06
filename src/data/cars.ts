@@ -47,6 +47,7 @@ export const cars: Car[] = [
   {
     id: "mustang-67",
     name: "Ford Mustang Fastback",
+    make: "Ford",
     image: mustang,
     type: "Coupé",
     price: 65_000,
@@ -173,6 +174,7 @@ export const cars: Car[] = [
   {
     id: "belair-58",
     name: "Chevrolet Bel Air",
+    make: "Chevrolet",
     image: belair,
     type: "Coupé",
     price: 55_000,
