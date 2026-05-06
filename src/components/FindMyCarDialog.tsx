@@ -104,7 +104,25 @@ export function FindMyCarDialog({ car }: { car: Car }) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Max price</Label>
+              <span className="text-sm font-medium text-primary">${maxPrice.toLocaleString()}</span>
+            </div>
+            <Slider
+              min={0}
+              max={500000}
+              step={1000}
+              value={[maxPrice]}
+              onValueChange={([v]) => setMaxPrice(v)}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>$0</span>
+              <span>$500,000</span>
+            </div>
+          </div>
+
             <Label htmlFor="year">
               Production year <span className="text-muted-foreground">(optional)</span>
             </Label>
