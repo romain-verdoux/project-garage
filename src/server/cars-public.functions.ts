@@ -28,6 +28,7 @@ function rowToCar(row: CarRow): Car {
   return {
     id: row.slug,
     name: row.name,
+    make: row.make || row.name.split(" ")[0],
     image: row.image_url || fallbackImg,
     type: row.type as CarType,
     price: row.price,
