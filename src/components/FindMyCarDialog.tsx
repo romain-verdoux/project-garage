@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import type { Car } from "@/data/cars";
 import { projectsStore } from "@/lib/projects-store";
@@ -37,6 +38,7 @@ export function FindMyCarDialog({ car }: { car: Car }) {
   const [make, setMake] = useState(defaults.make);
   const [model, setModel] = useState(defaults.model);
   const [year, setYear] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<number>(car.price);
   const [sources, setSources] = useState<string[]>([]);
   const [notify, setNotify] = useState<"mail" | "whatsapp" | "none">("none");
 
@@ -54,6 +56,7 @@ export function FindMyCarDialog({ car }: { car: Car }) {
       make: make.trim(),
       model: model.trim(),
       year: year.trim() || undefined,
+      maxPrice,
       sources,
       notify,
       createdAt: Date.now(),
@@ -98,6 +101,25 @@ export function FindMyCarDialog({ car }: { car: Car }) {
             <div className="space-y-1.5">
               <Label htmlFor="model">Model</Label>
               <Input id="model" value={model} onChange={(e) => setModel(e.target.value)} maxLength={50} />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Max price</Label>
+              <span className="text-sm font-medium text-primary">${maxPrice.toLocaleString()}</span>
+            </div>
+            <Slider
+              min={0}
+              max={500000}
+              step={1000}
+              value={[maxPrice]}
+              onValueChange={([v]) => setMaxPrice(v)}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>$0</span>
+              <span>$500,000</span>
             </div>
           </div>
 

@@ -10,6 +10,7 @@ export type SeekingAlert = {
   make: string;
   model: string;
   year?: string;
+  maxPrice?: number;
   sources: string[];
   notify: "mail" | "whatsapp" | "none";
   createdAt: number;

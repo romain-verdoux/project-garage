@@ -72,8 +72,18 @@ export function CarDetailView({
 
           <div className="mt-8 flex items-baseline gap-3 border-t-2 border-foreground/15 pt-6">
             <span className="font-stencil text-xs uppercase text-muted-foreground">Current market value</span>
+            {context === "projects" && projectsStore.getSeeking(car.id)?.maxPrice != null && (
+              <span className="font-stencil text-xs uppercase text-muted-foreground ml-auto">Your budget</span>
+            )}
           </div>
-          <div className="font-display text-5xl text-primary">{fmt(car.price)}</div>
+          <div className="flex items-baseline gap-4">
+            <div className="font-display text-5xl text-primary">{fmt(car.price)}</div>
+            {context === "projects" && projectsStore.getSeeking(car.id)?.maxPrice != null && (
+              <div className="font-display text-3xl text-muted-foreground ml-auto">
+                {fmt(projectsStore.getSeeking(car.id)!.maxPrice!)}
+              </div>
+            )}
+          </div>
         </article>
 
         <aside className="bg-card border-2 border-foreground/15 rounded-xl p-6 shadow-[var(--shadow-card)] h-fit">
