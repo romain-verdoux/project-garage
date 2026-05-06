@@ -15,6 +15,7 @@ export type CostLevel = "low" | "medium" | "high" | "extreme";
 export type Car = {
   id: string;
   name: string;
+  make: string;
   image: string;
   type: CarType;
   price: number; // USD market value
