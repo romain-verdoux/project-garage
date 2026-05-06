@@ -26,7 +26,7 @@ export function SiteHeader() {
             <Wrench className="h-5 w-5" />
           </div>
           <div className="leading-none">
-            <div className="font-display text-2xl tracking-wide">GARAGE LOG</div>
+            <div className="font-display text-2xl tracking-wide">DREAM GARAGE PROJECT</div>
             <div className="font-stencil text-[10px] text-muted-foreground uppercase">est. project library</div>
           </div>
         </Link>
