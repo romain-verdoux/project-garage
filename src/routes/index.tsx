@@ -105,6 +105,7 @@ function LibraryPage() {
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);
+  const [makes, setMakes] = useState<string[]>([]);
 
   // Stream the rest in the background once available
   useEffect(() => {
