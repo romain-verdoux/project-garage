@@ -32,7 +32,7 @@ function AdminPage() {
   const discover = useServerFn(discoverCarUrls);
   const scrapeMany = useServerFn(scrapeManyCars);
   const importAll = useServerFn(importAllFromWikipedia);
-  const deleteCar = useServerFn(deleteCarById);
+  const updateField = useServerFn(updateCarField);
 
   // Car list
   const [cars, setCars] = useState<{ id: string; name: string }[]>([]);
