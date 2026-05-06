@@ -341,18 +341,70 @@ function AdminPage() {
         </div>
 
         {cars.length > 0 && (
-          <div className="rounded-lg border bg-card max-h-[500px] overflow-auto">
+          <div className="rounded-lg border bg-card max-h-[600px] overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead className="min-w-[200px]">Name</TableHead>
+                  <TableHead className="min-w-[100px]">Make</TableHead>
+                  <TableHead className="min-w-[100px]">Type</TableHead>
+                  <TableHead className="min-w-[90px]">Price ($)</TableHead>
+                  <TableHead className="min-w-[70px]">Year</TableHead>
+                  <TableHead className="min-w-[70px]">Decade</TableHead>
                   <TableHead className="w-24 text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {cars.map((car) => (
                   <TableRow key={car.id}>
-                    <TableCell className="font-medium">{car.name}</TableCell>
+                    <EditableCell
+                      value={car.name}
+                      onSave={async (v) => {
+                        await updateField({ data: { id: car.id, field: "name", value: v } });
+                        setCars((p) => p.map((c) => (c.id === car.id ? { ...c, name: v } : c)));
+                      }}
+                    />
+                    <EditableCell
+                      value={car.make}
+                      onSave={async (v) => {
+                        await updateField({ data: { id: car.id, field: "make", value: v } });
+                        setCars((p) => p.map((c) => (c.id === car.id ? { ...c, make: v } : c)));
+                      }}
+                    />
+                    <EditableSelect
+                      value={car.type}
+                      options={CAR_TYPES}
+                      onSave={async (v) => {
+                        await updateField({ data: { id: car.id, field: "type", value: v } });
+                        setCars((p) => p.map((c) => (c.id === car.id ? { ...c, type: v } : c)));
+                      }}
+                    />
+                    <EditableCell
+                      value={String(car.price)}
+                      type="number"
+                      onSave={async (v) => {
+                        const num = Number(v);
+                        await updateField({ data: { id: car.id, field: "price", value: num } });
+                        setCars((p) => p.map((c) => (c.id === car.id ? { ...c, price: num } : c)));
+                      }}
+                    />
+                    <EditableCell
+                      value={String(car.year)}
+                      type="number"
+                      onSave={async (v) => {
+                        const num = Number(v);
+                        await updateField({ data: { id: car.id, field: "year", value: num } });
+                        setCars((p) => p.map((c) => (c.id === car.id ? { ...c, year: num } : c)));
+                      }}
+                    />
+                    <EditableSelect
+                      value={car.decade}
+                      options={DECADES}
+                      onSave={async (v) => {
+                        await updateField({ data: { id: car.id, field: "decade", value: v } });
+                        setCars((p) => p.map((c) => (c.id === car.id ? { ...c, decade: v } : c)));
+                      }}
+                    />
                     <TableCell className="text-right">
                       <Button
                         variant="destructive"
