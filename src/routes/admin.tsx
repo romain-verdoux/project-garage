@@ -130,8 +130,7 @@ function EditableSelect({
     </TableCell>
   );
 }
-
-
+function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const scrape = useServerFn(scrapeCarFromUrl);
