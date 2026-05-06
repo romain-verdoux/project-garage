@@ -133,6 +133,7 @@ export function CarDetailView({
           {projectsStore.getSeeking(car.id) && (
             <MarketplaceLinks alert={projectsStore.getSeeking(car.id)!} />
           )}
+        </aside>
       </div>
     </main>
   );
