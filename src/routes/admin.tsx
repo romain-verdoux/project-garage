@@ -36,7 +36,7 @@ function AdminPage() {
   const updateField = useServerFn(updateCarField);
 
   // Car list
-  const [cars, setCars] = useState<{ id: string; name: string }[]>([]);
+  const [cars, setCars] = useState<AdminCar[]>([]);
   const [carsLoading, setCarsLoading] = useState(false);
   const loadCars = useCallback(async () => {
     setCarsLoading(true);
