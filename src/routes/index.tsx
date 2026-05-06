@@ -118,11 +118,17 @@ function LibraryPage() {
 
   const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
 
+  const allMakes = useMemo(() => {
+    const set = new Set(cars.map((c) => c.name.split(/\s+/)[0]));
+    return Array.from(set).sort();
+  }, [cars]);
+
   const toggle = <T,>(arr: T[], setArr: (v: T[]) => void, v: T) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const filtered = useMemo(() => {
     return cars.filter((c) => {
+      if (makes.length && !makes.some((m) => c.name.startsWith(m))) return false;
       if (types.length && !types.includes(c.type)) return false;
       if (decades.length && !decades.includes(c.decade)) return false;
       if (prices.length) {
@@ -134,10 +140,10 @@ function LibraryPage() {
       }
       return true;
     });
-  }, [cars, types, prices, decades]);
+  }, [cars, makes, types, prices, decades]);
 
   // When filters are active, show all matches; otherwise paginate by `visible`
-  const hasFilters = types.length + prices.length + decades.length > 0;
+  const hasFilters = makes.length + types.length + prices.length + decades.length > 0;
   const shown = hasFilters ? filtered : filtered.slice(0, visible);
   const canShowMore = !hasFilters && visible < filtered.length;
 
