@@ -123,6 +123,7 @@ export function FindMyCarDialog({ car }: { car: Car }) {
             </div>
           </div>
 
+          <div className="space-y-1.5">
             <Label htmlFor="year">
               Production year <span className="text-muted-foreground">(optional)</span>
             </Label>
