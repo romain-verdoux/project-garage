@@ -24,8 +24,114 @@ export const Route = createFileRoute("/admin")({
 });
 
 type BulkResult = { url: string; ok: boolean; name?: string; slug?: string; error?: string };
+function EditableCell({
+  value,
+  onSave,
+  type = "text",
+}: {
+  value: string;
+  onSave: (v: string) => Promise<void>;
+  type?: "text" | "number";
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
 
-function AdminPage() {
+  const commit = async () => {
+    if (draft === value) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(draft);
+      toast.success("Saved");
+    } catch {
+      toast.error("Save failed");
+      setDraft(value);
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <TableCell>
+        <Input
+          autoFocus
+          type={type}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") {
+              setDraft(value);
+              setEditing(false);
+            }
+          }}
+          disabled={saving}
+          className="h-7 text-xs"
+        />
+      </TableCell>
+    );
+  }
+
+  return (
+    <TableCell
+      className="cursor-pointer hover:bg-muted/50 font-medium"
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
+    >
+      {value || <span className="text-muted-foreground italic">—</span>}
+    </TableCell>
+  );
+}
+
+function EditableSelect({
+  value,
+  options,
+  onSave,
+}: {
+  value: string;
+  options: readonly string[];
+  onSave: (v: string) => Promise<void>;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <TableCell>
+      <select
+        value={value}
+        disabled={saving}
+        className="bg-transparent text-sm cursor-pointer border-none outline-none"
+        onChange={async (e) => {
+          const v = e.target.value;
+          setSaving(true);
+          try {
+            await onSave(v);
+            toast.success("Saved");
+          } catch {
+            toast.error("Save failed");
+          } finally {
+            setSaving(false);
+          }
+        }}
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </TableCell>
+  );
+}
+
+
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const scrape = useServerFn(scrapeCarFromUrl);
