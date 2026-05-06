@@ -242,7 +242,7 @@ function AdminPage() {
       const ok = results.filter((r) => r.ok).length;
       const failed = results.length - ok;
       setBulkStatus(`Done. Imported ${ok}, failed ${failed}.`);
-      if (ok > 0) toast.success(`Imported ${ok} cars`);
+      if (ok > 0) { toast.success(`Imported ${ok} cars`); loadCars(); }
       if (failed > 0) toast.error(`${failed} failed`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Bulk scrape failed");
