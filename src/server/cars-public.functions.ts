@@ -84,7 +84,7 @@ export const updateCarField = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     const { error } = await supabaseAdmin
       .from("cars")
-      .update({ [data.field]: data.value })
+      .update({ [data.field]: data.value } as any)
       .eq("id", data.id);
     if (error) throw new Error(`Failed to update car: ${error.message}`);
     return { ok: true };
