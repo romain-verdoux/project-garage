@@ -56,6 +56,7 @@ export function FindMyCarDialog({ car }: { car: Car }) {
       make: make.trim(),
       model: model.trim(),
       year: year.trim() || undefined,
+      maxPrice,
       sources,
       notify,
       createdAt: Date.now(),
