@@ -263,7 +263,7 @@ function AdminPage() {
       setWikiStatus(
         `${res.makeName}: discovered ${res.discovered} models · skipped ${res.skipped} (already imported) · imported ${res.imported} · failed ${res.failed}.`,
       );
-      if (res.imported > 0) toast.success(`Imported ${res.imported} cars`);
+      if (res.imported > 0) { toast.success(`Imported ${res.imported} cars`); loadCars(); }
       if (res.imported === 0 && res.failed === 0 && res.discovered === res.skipped) {
         toast.info("Nothing new to import");
       }
