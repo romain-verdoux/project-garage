@@ -98,15 +98,25 @@ export const deleteCarById = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export type AdminCar = {
+  id: string;
+  name: string;
+  make: string;
+  type: string;
+  price: number;
+  year: number;
+  decade: string;
+};
+
 export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ id: string; name: string }[]> => {
+  async (): Promise<AdminCar[]> => {
     const { data, error } = await supabaseAdmin
       .from("cars")
-      .select("id,name")
+      .select("id,name,make,type,price,year,decade")
       .order("name", { ascending: true })
       .limit(2000);
     if (error) throw new Error(`Failed to load cars: ${error.message}`);
-    return data as { id: string; name: string }[];
+    return data as AdminCar[];
   },
 );
 
