@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Plus } from "lucide-react";
 import { Stars, DifficultyBadge, CostBadge, SpecRow } from "@/components/SpecRow";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { FindMyCarDialog } from "@/components/FindMyCarDialog";
+import { MarketplaceLinks } from "@/components/MarketplaceLinks";
 import { toast } from "sonner";
 import type { Car } from "@/data/cars";
 
@@ -128,6 +129,10 @@ export function CarDetailView({
           )}
 
           <FindMyCarDialog car={car} />
+
+          {projectsStore.getSeeking(car.id) && (
+            <MarketplaceLinks alert={projectsStore.getSeeking(car.id)!} />
+          )}
         </aside>
       </div>
     </main>
