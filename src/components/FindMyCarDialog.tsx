@@ -31,6 +31,7 @@ function splitMakeModel(name: string) {
 }
 
 export function FindMyCarDialog({ car }: { car: Car }) {
+  const hasAlert = projectsStore.hasSeeking(car.id);
   const [open, setOpen] = useState(false);
   const defaults = splitMakeModel(car.name);
 
