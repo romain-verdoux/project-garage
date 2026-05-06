@@ -31,6 +31,7 @@ function splitMakeModel(name: string) {
 }
 
 export function FindMyCarDialog({ car }: { car: Car }) {
+  const hasAlert = projectsStore.hasSeeking(car.id);
   const [open, setOpen] = useState(false);
   const defaults = splitMakeModel(car.name);
 
@@ -71,7 +72,7 @@ export function FindMyCarDialog({ car }: { car: Car }) {
         <button
           className="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display text-xl tracking-wide transition-all border-2 border-foreground/20 bg-background hover:bg-accent hover:text-accent-foreground"
         >
-          <Bell className="h-5 w-5" /> Find my {car.name}
+          <Bell className="h-5 w-5" /> {hasAlert ? `Modify the search for my ${car.name}` : `Find my ${car.name}`}
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
