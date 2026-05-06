@@ -31,6 +31,22 @@ function AdminPage() {
   const discover = useServerFn(discoverCarUrls);
   const scrapeMany = useServerFn(scrapeManyCars);
   const importAll = useServerFn(importAllFromWikipedia);
+  const deleteCar = useServerFn(deleteCarById);
+
+  // Car list
+  const [cars, setCars] = useState<{ id: string; name: string }[]>([]);
+  const [carsLoading, setCarsLoading] = useState(false);
+  const loadCars = useCallback(async () => {
+    setCarsLoading(true);
+    try {
+      const list = await listCarsAdmin();
+      setCars(list);
+    } catch {
+      toast.error("Failed to load car list");
+    } finally {
+      setCarsLoading(false);
+    }
+  }, []);
 
   // Wiki one-shot mode
   const [wikiUrl, setWikiUrl] = useState("");
