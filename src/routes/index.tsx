@@ -119,7 +119,7 @@ function LibraryPage() {
   const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
 
   const allMakes = useMemo(() => {
-    const set = new Set(cars.map((c) => c.name.split(/\s+/)[0]));
+    const set = new Set(cars.map((c) => c.make || c.name.split(/\s+/)[0]).filter(Boolean));
     return Array.from(set).sort();
   }, [cars]);
 
@@ -128,7 +128,7 @@ function LibraryPage() {
 
   const filtered = useMemo(() => {
     return cars.filter((c) => {
-      if (makes.length && !makes.some((m) => c.name.startsWith(m))) return false;
+      if (makes.length && !makes.includes(c.make)) return false;
       if (types.length && !types.includes(c.type)) return false;
       if (decades.length && !decades.includes(c.decade)) return false;
       if (prices.length) {

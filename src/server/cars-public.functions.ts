@@ -8,6 +8,7 @@ type CarRow = {
   id: string;
   slug: string;
   name: string;
+  make: string;
   image_url: string | null;
   type: string;
   price: number;
@@ -27,6 +28,7 @@ function rowToCar(row: CarRow): Car {
   return {
     id: row.slug,
     name: row.name,
+    make: row.make || row.name.split(" ")[0],
     image: row.image_url || fallbackImg,
     type: row.type as CarType,
     price: row.price,
@@ -44,7 +46,7 @@ function rowToCar(row: CarRow): Car {
 }
 
 const CAR_COLUMNS =
-  "id,slug,name,image_url,type,price,year,decade,history,difficulty_stars,parts_to_find,cost_of_parts,reliability_stars,mechanical_difficulty,electronic_difficulty,known_defects";
+  "id,slug,name,make,image_url,type,price,year,decade,history,difficulty_stars,parts_to_find,cost_of_parts,reliability_stars,mechanical_difficulty,electronic_difficulty,known_defects";
 
 export const listCars = createServerFn({ method: "GET" }).handler(async (): Promise<Car[]> => {
   const { data, error } = await supabaseAdmin
@@ -71,6 +73,25 @@ export const listCarsPage = createServerFn({ method: "GET" })
     return (rows as unknown as CarRow[]).map(rowToCar);
   });
 
+export const updateCarField = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        field: z.enum(["name", "make", "type", "price", "year", "decade"]),
+        value: z.union([z.string(), z.number()]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { error } = await supabaseAdmin
+      .from("cars")
+      .update({ [data.field]: data.value } as any)
+      .eq("id", data.id);
+    if (error) throw new Error(`Failed to update car: ${error.message}`);
+    return { ok: true };
+  });
+
 export const deleteCarById = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
@@ -79,15 +100,25 @@ export const deleteCarById = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export type AdminCar = {
+  id: string;
+  name: string;
+  make: string;
+  type: string;
+  price: number;
+  year: number;
+  decade: string;
+};
+
 export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ id: string; name: string }[]> => {
+  async (): Promise<AdminCar[]> => {
     const { data, error } = await supabaseAdmin
       .from("cars")
-      .select("id,name")
+      .select("id,name,make,type,price,year,decade")
       .order("name", { ascending: true })
       .limit(2000);
     if (error) throw new Error(`Failed to load cars: ${error.message}`);
-    return data as { id: string; name: string }[];
+    return data as AdminCar[];
   },
 );
 
