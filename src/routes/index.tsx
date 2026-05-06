@@ -119,7 +119,7 @@ function LibraryPage() {
   const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
 
   const allMakes = useMemo(() => {
-    const set = new Set(cars.map((c) => c.name.split(/\s+/)[0]));
+    const set = new Set(cars.map((c) => c.make || c.name.split(/\s+/)[0]).filter(Boolean));
     return Array.from(set).sort();
   }, [cars]);
 
