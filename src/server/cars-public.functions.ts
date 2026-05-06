@@ -8,6 +8,7 @@ type CarRow = {
   id: string;
   slug: string;
   name: string;
+  make: string;
   image_url: string | null;
   type: string;
   price: number;
