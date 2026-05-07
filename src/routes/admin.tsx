@@ -133,6 +133,7 @@ function EditableSelect({
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
   const scrape = useServerFn(scrapeCarFromUrl);
   const discover = useServerFn(discoverCarUrls);
   const scrapeMany = useServerFn(scrapeManyCars);
