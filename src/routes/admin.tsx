@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
@@ -133,6 +133,7 @@ function EditableSelect({
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
   const scrape = useServerFn(scrapeCarFromUrl);
   const discover = useServerFn(discoverCarUrls);
   const scrapeMany = useServerFn(scrapeManyCars);
@@ -520,6 +521,7 @@ function AdminPage() {
                           try {
                             await deleteCar({ data: { id: car.id } });
                             setCars((prev) => prev.filter((c) => c.id !== car.id));
+                            router.invalidate();
                             toast.success(`Deleted "${car.name}"`);
                           } catch {
                             toast.error("Failed to delete car");
