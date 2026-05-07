@@ -134,9 +134,6 @@ export function CarDetailView({
 
           <FindMyCarDialog car={car} />
 
-          {projectsStore.getSeeking(car.id) && (
-            <MarketplaceLinks alert={projectsStore.getSeeking(car.id)!} />
-          )}
         </aside>
       </div>
     </main>
