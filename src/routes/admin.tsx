@@ -521,6 +521,7 @@ function AdminPage() {
                           try {
                             await deleteCar({ data: { id: car.id } });
                             setCars((prev) => prev.filter((c) => c.id !== car.id));
+                            router.invalidate();
                             toast.success(`Deleted "${car.name}"`);
                           } catch {
                             toast.error("Failed to delete car");
