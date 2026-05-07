@@ -85,6 +85,10 @@ export function CarDetailView({
               </div>
             )}
           </div>
+
+          {projectsStore.getSeeking(car.id) && (
+            <MarketplaceLinks alert={projectsStore.getSeeking(car.id)!} />
+          )}
         </article>
 
         <aside className="bg-card border-2 border-foreground/15 rounded-xl p-6 shadow-[var(--shadow-card)] h-fit">
@@ -130,9 +134,6 @@ export function CarDetailView({
 
           <FindMyCarDialog car={car} />
 
-          {projectsStore.getSeeking(car.id) && (
-            <MarketplaceLinks alert={projectsStore.getSeeking(car.id)!} />
-          )}
         </aside>
       </div>
     </main>
