@@ -6,6 +6,7 @@ import { Check, X } from "lucide-react";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars, importAllFromWikipedia } from "@/lib/admin-scrape.functions";
 import { listCarsAdmin, deleteCarById, updateCarField, type AdminCar } from "@/lib/cars-public.functions";
 import { backfillCarImages, countMissingImages } from "@/lib/image-backfill.functions";
+import { estimateMissingPrices, countMissingPrices } from "@/lib/price-estimate.functions";
 import { CAR_TYPES, DECADES } from "@/data/cars";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,6 +144,53 @@ function AdminPage() {
   const updateField = useServerFn(updateCarField);
   const runBackfill = useServerFn(backfillCarImages);
   const checkMissing = useServerFn(countMissingImages);
+  const runEstimatePrices = useServerFn(estimateMissingPrices);
+  const checkMissingPrices = useServerFn(countMissingPrices);
+
+  // Price estimate
+  const [priceBusy, setPriceBusy] = useState(false);
+  const [priceStatus, setPriceStatus] = useState<string>("");
+  const [priceRemaining, setPriceRemaining] = useState<number | null>(null);
+  const [priceCountBusy, setPriceCountBusy] = useState(false);
+
+  const refreshMissingPrices = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      setPriceCountBusy(true);
+      try {
+        const { remaining } = await checkMissingPrices();
+        setPriceRemaining(remaining);
+        if (!opts?.silent) toast.success(`${remaining} cars still missing a price`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to refresh price count";
+        toast.error(msg);
+      } finally {
+        setPriceCountBusy(false);
+      }
+    },
+    [checkMissingPrices],
+  );
+
+  const onEstimateBatch = useCallback(
+    async (batchSize: number) => {
+      setPriceBusy(true);
+      setPriceStatus("Asking AI for market values…");
+      try {
+        const res = await runEstimatePrices({ data: { batchSize } });
+        setPriceRemaining(res.remaining);
+        setPriceStatus(
+          `Batch done: ${res.succeeded}/${res.processed} priced · ${res.remaining} cars still missing prices.`,
+        );
+        toast.success(`Priced ${res.succeeded} cars`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Estimate failed";
+        setPriceStatus(msg);
+        toast.error(msg);
+      } finally {
+        setPriceBusy(false);
+      }
+    },
+    [runEstimatePrices],
+  );
 
   // Image backfill
   const [imgBusy, setImgBusy] = useState(false);
@@ -172,7 +220,8 @@ function AdminPage() {
 
   useEffect(() => {
     refreshMissingCount({ silent: true });
-  }, [refreshMissingCount]);
+    refreshMissingPrices({ silent: true });
+  }, [refreshMissingCount, refreshMissingPrices]);
 
   const onBackfillBatch = useCallback(
     async (batchSize: number) => {
@@ -520,6 +569,39 @@ function AdminPage() {
         </div>
         {imgStatus && <p className="text-sm text-muted-foreground mt-3">{imgStatus}</p>}
       </section>
+
+      {/* ── Price estimation ── */}
+      <section className="mt-12 rounded-lg border bg-card p-6">
+        <h2 className="font-display text-xl mb-2">Estimate missing prices</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Uses Lovable AI to estimate a current US market value (USD) for each car with
+          no price. Wikipedia-imported cars come in with price = 0; this fills them in.
+          Estimates are rough — edit any value in the table below to override.
+          {priceRemaining !== null && (
+            <>
+              {" "}
+              <strong className="text-foreground">{priceRemaining}</strong> cars still need a price.
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => onEstimateBatch(10)} disabled={priceBusy}>
+            {priceBusy ? "Working…" : "Estimate next 10"}
+          </Button>
+          <Button variant="secondary" onClick={() => onEstimateBatch(25)} disabled={priceBusy}>
+            Estimate next 25
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => refreshMissingPrices()}
+            disabled={priceBusy || priceCountBusy}
+          >
+            {priceCountBusy ? "Checking…" : "Refresh count"}
+          </Button>
+        </div>
+        {priceStatus && <p className="text-sm text-muted-foreground mt-3">{priceStatus}</p>}
+      </section>
+
 
       {/* ── Car library management ── */}
       <section className="mt-16">
