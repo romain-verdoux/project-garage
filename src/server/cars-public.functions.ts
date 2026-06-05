@@ -131,6 +131,7 @@ export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
 export const getCarBySlug = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Car | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("cars")
       .select(CAR_COLUMNS)
