@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { getCarBySlug } from "@/server/cars-public.functions";
+import { getCarBySlug } from "@/lib/cars-public.functions";
 import { CarDetailView } from "@/components/CarDetailView";
 
 export const Route = createFileRoute("/library/$carId")({

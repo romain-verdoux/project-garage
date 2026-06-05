@@ -4,7 +4,7 @@ import { ChevronDown, Check } from "lucide-react";
 import { CAR_TYPES, PRICE_BUCKETS, DECADES, type Car, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { listCarsPage } from "@/server/cars-public.functions";
+import { listCarsPage } from "@/lib/cars-public.functions";
 import heroImg from "@/assets/hero-garage.jpg";
 
 const INITIAL_COUNT = 30;
