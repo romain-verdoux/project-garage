@@ -141,6 +141,49 @@ function AdminPage() {
   const importAll = useServerFn(importAllFromWikipedia);
   const deleteCar = useServerFn(deleteCarById);
   const updateField = useServerFn(updateCarField);
+  const runBackfill = useServerFn(backfillCarImages);
+  const checkMissing = useServerFn(countMissingImages);
+
+  // Image backfill
+  const [imgBusy, setImgBusy] = useState(false);
+  const [imgStatus, setImgStatus] = useState<string>("");
+  const [imgRemaining, setImgRemaining] = useState<number | null>(null);
+
+  const refreshMissingCount = useCallback(async () => {
+    try {
+      const { remaining } = await checkMissing();
+      setImgRemaining(remaining);
+    } catch {
+      /* ignore */
+    }
+  }, [checkMissing]);
+
+  useEffect(() => {
+    refreshMissingCount();
+  }, [refreshMissingCount]);
+
+  const onBackfillBatch = useCallback(
+    async (batchSize: number) => {
+      setImgBusy(true);
+      setImgStatus("Searching Wikipedia, then Google Images…");
+      try {
+        const res = await runBackfill({ data: { batchSize } });
+        setImgRemaining(res.remaining);
+        setImgStatus(
+          `Batch done: ${res.succeeded}/${res.processed} matched · ${res.remaining} cars still missing images.`,
+        );
+        toast.success(`Updated ${res.succeeded} images`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Backfill failed";
+        setImgStatus(msg);
+        toast.error(msg);
+      } finally {
+        setImgBusy(false);
+      }
+    },
+    [runBackfill],
+  );
+
 
   // Car list
   const [cars, setCars] = useState<AdminCar[]>([]);
