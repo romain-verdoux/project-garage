@@ -144,6 +144,54 @@ function AdminPage() {
   const updateField = useServerFn(updateCarField);
   const runBackfill = useServerFn(backfillCarImages);
   const checkMissing = useServerFn(countMissingImages);
+  const runEstimatePrices = useServerFn(estimateMissingPrices);
+  const checkMissingPrices = useServerFn(countMissingPrices);
+
+  // Price estimate
+  const [priceBusy, setPriceBusy] = useState(false);
+  const [priceStatus, setPriceStatus] = useState<string>("");
+  const [priceRemaining, setPriceRemaining] = useState<number | null>(null);
+  const [priceCountBusy, setPriceCountBusy] = useState(false);
+
+  const refreshMissingPrices = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      setPriceCountBusy(true);
+      try {
+        const { remaining } = await checkMissingPrices();
+        setPriceRemaining(remaining);
+        if (!opts?.silent) toast.success(`${remaining} cars still missing a price`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to refresh price count";
+        toast.error(msg);
+      } finally {
+        setPriceCountBusy(false);
+      }
+    },
+    [checkMissingPrices],
+  );
+
+  const onEstimateBatch = useCallback(
+    async (batchSize: number) => {
+      setPriceBusy(true);
+      setPriceStatus("Asking AI for market values…");
+      try {
+        const res = await runEstimatePrices({ data: { batchSize } });
+        setPriceRemaining(res.remaining);
+        setPriceStatus(
+          `Batch done: ${res.succeeded}/${res.processed} priced · ${res.remaining} cars still missing prices.`,
+        );
+        toast.success(`Priced ${res.succeeded} cars`);
+        loadCars();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Estimate failed";
+        setPriceStatus(msg);
+        toast.error(msg);
+      } finally {
+        setPriceBusy(false);
+      }
+    },
+    [runEstimatePrices],
+  );
 
   // Image backfill
   const [imgBusy, setImgBusy] = useState(false);
