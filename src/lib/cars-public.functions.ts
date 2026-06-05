@@ -60,21 +60,74 @@ export const listCars = createServerFn({ method: "GET" }).handler(async (): Prom
   return (data as unknown as CarRow[]).map(rowToCar);
 });
 
+const PRICE_RANGES: Record<string, { min: number; max: number }> = {
+  u10: { min: 0, max: 10_000 },
+  "10-25": { min: 10_000, max: 25_000 },
+  "25-50": { min: 25_000, max: 50_000 },
+  "50-100": { min: 50_000, max: 100_000 },
+  a100: { min: 100_000, max: 1_000_000_000 },
+};
+
 export const listCarsPage = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) =>
-    z.object({ offset: z.number().int().min(0), limit: z.number().int().min(1).max(200) }).parse(data),
+    z
+      .object({
+        offset: z.number().int().min(0),
+        limit: z.number().int().min(1).max(200),
+        makes: z.array(z.string()).optional().default([]),
+        types: z.array(z.string()).optional().default([]),
+        decades: z.array(z.string()).optional().default([]),
+        prices: z.array(z.string()).optional().default([]),
+      })
+      .parse(data),
   )
-  .handler(async ({ data }): Promise<Car[]> => {
-    const { offset, limit } = data;
+  .handler(async ({ data }): Promise<{ cars: Car[]; total: number }> => {
+    const { offset, limit, makes, types, decades, prices } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from("cars")
-      .select(CAR_COLUMNS)
+      .select(CAR_COLUMNS, { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
+    if (makes.length) q = q.in("make", makes);
+    if (types.length) q = q.in("type", types as any);
+    if (decades.length) q = q.in("decade", decades as any);
+    if (prices.length) {
+      const parts = prices
+        .map((p) => PRICE_RANGES[p])
+        .filter(Boolean)
+        .map((r) => `and(price.gte.${r.min},price.lt.${r.max})`);
+      if (parts.length) q = q.or(parts.join(","));
+    }
+    const { data: rows, error, count } = await q;
     if (error) throw new Error(`Failed to load cars: ${error.message}`);
-    return (rows as unknown as CarRow[]).map(rowToCar);
+    return {
+      cars: (rows as unknown as CarRow[]).map(rowToCar),
+      total: count ?? 0,
+    };
   });
+
+export const listCarFacets = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ makes: string[] }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Loop in pages of 1000 to gather all distinct makes (bypasses PostgREST cap).
+    const makes = new Set<string>();
+    const PAGE = 1000;
+    for (let from = 0; from < 100_000; from += PAGE) {
+      const { data, error } = await supabaseAdmin
+        .from("cars")
+        .select("make")
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(`Failed to load facets: ${error.message}`);
+      if (!data || data.length === 0) break;
+      for (const r of data as { make: string | null }[]) {
+        if (r.make) makes.add(r.make);
+      }
+      if (data.length < PAGE) break;
+    }
+    return { makes: Array.from(makes).sort() };
+  },
+);
 
 export const updateCarField = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
