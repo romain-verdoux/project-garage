@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+// supabaseAdmin is imported dynamically inside each handler so this file
+// stays free of top-level server-only imports (client-reachable via routes).
 import type { Car, CarType, Decade, Difficulty, CostLevel } from "@/data/cars";
 import fallbackImg from "@/assets/hero-garage.jpg";
 
