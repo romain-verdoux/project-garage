@@ -541,6 +541,7 @@ function AdminPage() {
                   <TableHead className="min-w-[90px]">Price ($)</TableHead>
                   <TableHead className="min-w-[70px]">Year</TableHead>
                   <TableHead className="min-w-[70px]">Decade</TableHead>
+                  <TableHead className="w-20 text-center">Picture</TableHead>
                   <TableHead className="w-24 text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -595,6 +596,13 @@ function AdminPage() {
                         setCars((p) => p.map((c) => (c.id === car.id ? { ...c, decade: v } : c)));
                       }}
                     />
+                    <TableCell className="text-center">
+                      {car.image_url ? (
+                        <Check className="inline h-4 w-4 text-green-600" />
+                      ) : (
+                        <X className="inline h-4 w-4 text-muted-foreground/40" />
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="destructive"
