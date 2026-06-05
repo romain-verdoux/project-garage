@@ -33,6 +33,7 @@ export type Database = {
           reliability_stars: number
           slug: string
           source_url: string | null
+          specs: Json | null
           type: Database["public"]["Enums"]["car_type"]
           updated_at: string
           year: number
@@ -55,6 +56,7 @@ export type Database = {
           reliability_stars?: number
           slug: string
           source_url?: string | null
+          specs?: Json | null
           type: Database["public"]["Enums"]["car_type"]
           updated_at?: string
           year: number
@@ -77,6 +79,7 @@ export type Database = {
           reliability_stars?: number
           slug?: string
           source_url?: string | null
+          specs?: Json | null
           type?: Database["public"]["Enums"]["car_type"]
           updated_at?: string
           year?: number

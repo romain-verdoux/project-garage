@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars } from "@/server/cars.functions";
 import { importAllFromWikipedia } from "@/server/wikipedia-bulk.functions";
 import { listCarsAdmin, deleteCarById, updateCarField, type AdminCar } from "@/lib/cars-public.functions";
+import { backfillCarImages, countMissingImages } from "@/lib/image-backfill.functions";
 import { CAR_TYPES, DECADES } from "@/data/cars";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,6 +141,49 @@ function AdminPage() {
   const importAll = useServerFn(importAllFromWikipedia);
   const deleteCar = useServerFn(deleteCarById);
   const updateField = useServerFn(updateCarField);
+  const runBackfill = useServerFn(backfillCarImages);
+  const checkMissing = useServerFn(countMissingImages);
+
+  // Image backfill
+  const [imgBusy, setImgBusy] = useState(false);
+  const [imgStatus, setImgStatus] = useState<string>("");
+  const [imgRemaining, setImgRemaining] = useState<number | null>(null);
+
+  const refreshMissingCount = useCallback(async () => {
+    try {
+      const { remaining } = await checkMissing();
+      setImgRemaining(remaining);
+    } catch {
+      /* ignore */
+    }
+  }, [checkMissing]);
+
+  useEffect(() => {
+    refreshMissingCount();
+  }, [refreshMissingCount]);
+
+  const onBackfillBatch = useCallback(
+    async (batchSize: number) => {
+      setImgBusy(true);
+      setImgStatus("Searching Wikipedia, then Google Images…");
+      try {
+        const res = await runBackfill({ data: { batchSize } });
+        setImgRemaining(res.remaining);
+        setImgStatus(
+          `Batch done: ${res.succeeded}/${res.processed} matched · ${res.remaining} cars still missing images.`,
+        );
+        toast.success(`Updated ${res.succeeded} images`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Backfill failed";
+        setImgStatus(msg);
+        toast.error(msg);
+      } finally {
+        setImgBusy(false);
+      }
+    },
+    [runBackfill],
+  );
+
 
   // Car list
   const [cars, setCars] = useState<AdminCar[]>([]);
@@ -437,6 +481,33 @@ function AdminPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* ── Image backfill ── */}
+      <section className="mt-12 rounded-lg border bg-card p-6">
+        <h2 className="font-display text-xl mb-2">Backfill car images</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          For every car missing a picture, tries Wikipedia first (free, license-safe),
+          then falls back to Google Images via Firecrawl. Run in batches to keep things responsive.
+          {imgRemaining !== null && (
+            <>
+              {" "}
+              <strong className="text-foreground">{imgRemaining}</strong> cars still need an image.
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => onBackfillBatch(10)} disabled={imgBusy}>
+            {imgBusy ? "Working…" : "Fetch next 10"}
+          </Button>
+          <Button variant="secondary" onClick={() => onBackfillBatch(25)} disabled={imgBusy}>
+            Fetch next 25
+          </Button>
+          <Button variant="outline" onClick={refreshMissingCount} disabled={imgBusy}>
+            Refresh count
+          </Button>
+        </div>
+        {imgStatus && <p className="text-sm text-muted-foreground mt-3">{imgStatus}</p>}
+      </section>
 
       {/* ── Car library management ── */}
       <section className="mt-16">
