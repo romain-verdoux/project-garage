@@ -422,11 +422,11 @@ const DiscoverInputSchema = z.object({
   limit: z.number().int().min(1).max(MAX_DISCOVERY).optional().default(20),
 });
 
-export const discoverCarUrls = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => DiscoverInputSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+export async function discoverCarUrlsForAdmin(
+  data: z.infer<typeof DiscoverInputSchema>,
+  userId: string,
+) {
+    await assertAdmin(userId);
 
     const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY is not configured");
@@ -462,7 +462,12 @@ export const discoverCarUrls = createServerFn({ method: "POST" })
       urls: fresh.slice(0, data.limit),
       source: adapter.id,
     };
-  });
+}
+
+export const discoverCarUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => DiscoverInputSchema.parse(data))
+  .handler(async ({ data, context }) => discoverCarUrlsForAdmin(data, context.userId));
 
 // =============================================================================
 // Single-page scrape
@@ -563,11 +568,11 @@ const ScrapeManyInputSchema = z.object({
   urls: z.array(z.string().url()).min(1).max(MAX_DISCOVERY),
 });
 
-export const scrapeManyCars = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => ScrapeManyInputSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+export async function scrapeManyCarsForAdmin(
+  data: z.infer<typeof ScrapeManyInputSchema>,
+  userId: string,
+) {
+    await assertAdmin(userId);
 
     const results: Array<{ url: string; ok: boolean; name?: string; slug?: string; error?: string }> = [];
     for (const url of data.urls) {
@@ -579,13 +584,23 @@ export const scrapeManyCars = createServerFn({ method: "POST" })
       }
     }
     return { results };
-  });
+}
+
+export const scrapeManyCars = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => ScrapeManyInputSchema.parse(data))
+  .handler(async ({ data, context }) => scrapeManyCarsForAdmin(data, context.userId));
+
+export async function scrapeCarFromUrlForAdmin(
+  data: z.infer<typeof InputSchema>,
+  userId: string,
+) {
+    await assertAdmin(userId);
+    const car = await scrapeOne(data.url);
+    return { car };
+}
 
 export const scrapeCarFromUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
-    const car = await scrapeOne(data.url);
-    return { car };
-  });
+  .handler(async ({ data, context }) => scrapeCarFromUrlForAdmin(data, context.userId));
