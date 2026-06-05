@@ -165,7 +165,41 @@ const wikipediaAdapter: SiteAdapter = {
     "Pick 'type' based on the most iconic body style.",
 };
 
-const ADAPTERS: SiteAdapter[] = [classicDriverAdapter, wikipediaAdapter];
+const netCarShowAdapter: SiteAdapter = {
+  id: "netcarshow",
+  hostMatch: ["netcarshow.com"],
+  isDetailUrl(u) {
+    try {
+      const url = new URL(u);
+      if (!url.hostname.includes("netcarshow.com")) return false;
+      const parts = url.pathname.split("/").filter(Boolean);
+      // Detail pages look like /<make>/<year>-<model>/  → 2 segments
+      if (parts.length !== 2) return false;
+      const [make, yearModel] = parts;
+      if (!/^[a-z0-9_-]+$/i.test(make)) return false;
+      // Exclude generic top-level sections
+      if (["explore", "latest-cars.html", "news", "search"].includes(make)) return false;
+      return /^\d{4}-.+/.test(yearModel);
+    } catch {
+      return false;
+    }
+  },
+  async discover(fc, url) {
+    const result = await fc.scrape(url, {
+      formats: ["links"],
+      onlyMainContent: false,
+      waitFor: 3000,
+    });
+    return extractLinks(result).filter(netCarShowAdapter.isDetailUrl);
+  },
+  extractionHint:
+    "This is a NetCarShow.com model page (press / spec page, not a car for sale). " +
+    "Set price to 0 (no asking price is listed). " +
+    "Use the model year shown in the URL / page title for 'year'. " +
+    "The 'history' field should summarize the model based on the page's description.",
+};
+
+const ADAPTERS: SiteAdapter[] = [classicDriverAdapter, wikipediaAdapter, netCarShowAdapter];
 
 function findAdapter(url: string): SiteAdapter | null {
   return ADAPTERS.find((a) => a.hostMatch.some((h) => url.includes(h))) ?? null;
