@@ -50,6 +50,7 @@ const CAR_COLUMNS =
   "id,slug,name,make,image_url,type,price,year,decade,history,difficulty_stars,parts_to_find,cost_of_parts,reliability_stars,mechanical_difficulty,electronic_difficulty,known_defects";
 
 export const listCars = createServerFn({ method: "GET" }).handler(async (): Promise<Car[]> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("cars")
     .select(CAR_COLUMNS)
@@ -65,6 +66,7 @@ export const listCarsPage = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }): Promise<Car[]> => {
     const { offset, limit } = data;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("cars")
       .select(CAR_COLUMNS)
@@ -113,6 +115,7 @@ export type AdminCar = {
 
 export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
   async (): Promise<AdminCar[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("cars")
       .select("id,name,make,type,price,year,decade")
