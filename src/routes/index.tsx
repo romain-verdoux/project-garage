@@ -1,13 +1,12 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Check, Loader2 } from "lucide-react";
 import { CAR_TYPES, PRICE_BUCKETS, DECADES, type Car, type CarType, type Decade } from "@/data/cars";
 import { CarCard } from "@/components/CarCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { listCarsPage } from "@/lib/cars-public.functions";
+import { listCarsPage, listCarFacets } from "@/lib/cars-public.functions";
 import heroImg from "@/assets/hero-garage.jpg";
 
-const INITIAL_COUNT = 30;
 const PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/")({
@@ -18,12 +17,11 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: async () => {
-    const initial = await listCarsPage({ data: { offset: 0, limit: INITIAL_COUNT } });
-    // Fire-and-forget the rest — streamed via <Await>
-    const restPromise = initial.length < INITIAL_COUNT
-      ? Promise.resolve([] as Car[])
-      : listCarsPage({ data: { offset: INITIAL_COUNT, limit: 200 } }).catch(() => [] as Car[]);
-    return { initial, restPromise };
+    const [first, facets] = await Promise.all([
+      listCarsPage({ data: { offset: 0, limit: PAGE_SIZE } }),
+      listCarFacets(),
+    ]);
+    return { first, facets };
   },
   component: LibraryPage,
   errorComponent: ({ error, reset }) => {
@@ -75,7 +73,7 @@ function FilterDropdown<T extends string>({
           <ChevronDown className="h-4 w-4 opacity-70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 p-2 bg-card border-2 border-foreground/15">
+      <PopoverContent align="start" className="w-56 p-2 bg-card border-2 border-foreground/15 max-h-80 overflow-y-auto">
         <div className="space-y-1">
           {options.map((o) => {
             const active = selected.includes(o.id);
@@ -99,53 +97,56 @@ function FilterDropdown<T extends string>({
 }
 
 function LibraryPage() {
-  const { initial, restPromise } = Route.useLoaderData();
-  const [rest, setRest] = useState<Car[]>([]);
-  const [visible, setVisible] = useState(INITIAL_COUNT);
+  const { first, facets } = Route.useLoaderData();
+  const [cars, setCars] = useState<Car[]>(first.cars);
+  const [total, setTotal] = useState<number>(first.total);
+  const [loading, setLoading] = useState(false);
   const [types, setTypes] = useState<CarType[]>([]);
   const [prices, setPrices] = useState<string[]>([]);
   const [decades, setDecades] = useState<Decade[]>([]);
   const [makes, setMakes] = useState<string[]>([]);
-
-  // Stream the rest in the background once available
-  useEffect(() => {
-    let cancelled = false;
-    restPromise.then((more: Car[]) => {
-      if (!cancelled) setRest(more);
-    });
-    return () => { cancelled = true; };
-  }, [restPromise]);
-
-  const cars = useMemo<Car[]>(() => [...initial, ...rest], [initial, rest]);
-
-  const allMakes = useMemo(() => {
-    const set = new Set(cars.map((c) => c.make || c.name.split(/\s+/)[0]).filter(Boolean));
-    return Array.from(set).sort();
-  }, [cars]);
+  const firstRender = useRef(true);
 
   const toggle = <T,>(arr: T[], setArr: (v: T[]) => void, v: T) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-  const filtered = useMemo(() => {
-    return cars.filter((c) => {
-      if (makes.length && !makes.includes(c.make)) return false;
-      if (types.length && !types.includes(c.type)) return false;
-      if (decades.length && !decades.includes(c.decade)) return false;
-      if (prices.length) {
-        const ok = prices.some((pid) => {
-          const b = PRICE_BUCKETS.find((x) => x.id === pid);
-          return b && c.price >= b.min && c.price < b.max;
-        });
-        if (!ok) return false;
-      }
-      return true;
-    });
-  }, [cars, makes, types, prices, decades]);
+  // Refetch page 0 whenever filters change.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    listCarsPage({
+      data: { offset: 0, limit: PAGE_SIZE, makes, types, decades, prices },
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setCars(res.cars);
+        setTotal(res.total);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [makes, types, decades, prices]);
 
-  // When filters are active, show all matches; otherwise paginate by `visible`
+  const loadMore = async () => {
+    setLoading(true);
+    try {
+      const res = await listCarsPage({
+        data: { offset: cars.length, limit: PAGE_SIZE, makes, types, decades, prices },
+      });
+      setCars((prev) => [...prev, ...res.cars]);
+      setTotal(res.total);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasFilters = makes.length + types.length + prices.length + decades.length > 0;
-  const shown = hasFilters ? filtered : filtered.slice(0, visible);
-  const canShowMore = !hasFilters && visible < filtered.length;
+  const canShowMore = cars.length < total;
 
   const clearAll = () => {
     setMakes([]);
@@ -153,6 +154,11 @@ function LibraryPage() {
     setPrices([]);
     setDecades([]);
   };
+
+  const makeOptions = useMemo(
+    () => facets.makes.map((m) => ({ id: m, label: m })),
+    [facets.makes],
+  );
 
   return (
     <main>
@@ -184,7 +190,7 @@ function LibraryPage() {
           <h2 className="font-display text-2xl mr-2">Filters</h2>
           <FilterDropdown
             title="Make"
-            options={allMakes.map((m) => ({ id: m, label: m }))}
+            options={makeOptions}
             selected={makes}
             onToggle={(v) => toggle(makes, setMakes, v)}
           />
@@ -220,40 +226,52 @@ function LibraryPage() {
         <div>
           <div className="flex items-end justify-between mb-6">
             <h2 className="font-display text-3xl">
-              {filtered.length} {filtered.length === 1 ? "car" : "cars"}
+              {total} {total === 1 ? "car" : "cars"}
             </h2>
             <span className="font-stencil text-xs uppercase text-muted-foreground">sorted by curator's pick</span>
           </div>
-          {cars.length === 0 ? (
+          {total === 0 && !loading ? (
             <div className="border-2 border-dashed border-foreground/20 rounded-lg p-12 text-center">
-              <p className="font-display text-2xl mb-2">No cars in the library yet</p>
-              <p className="text-muted-foreground">Head to the admin page to import your first car.</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="border-2 border-dashed border-foreground/20 rounded-lg p-12 text-center">
-              <p className="font-display text-2xl mb-2">No cars match those filters</p>
-              <p className="text-muted-foreground">Try clearing some filters to widen the search.</p>
+              <p className="font-display text-2xl mb-2">
+                {hasFilters ? "No cars match those filters" : "No cars in the library yet"}
+              </p>
+              <p className="text-muted-foreground">
+                {hasFilters
+                  ? "Try clearing some filters to widen the search."
+                  : "Head to the admin page to import your first car."}
+              </p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {shown.map((c) => (
+                {cars.map((c) => (
                   <CarCard key={c.id} car={c} />
                 ))}
               </div>
-              {canShowMore && (
-                <div className="flex justify-center mt-10">
+              <div className="flex justify-center mt-10">
+                {canShowMore ? (
                   <button
-                    onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                    className="px-6 py-3 rounded-md border-2 border-foreground/15 bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground font-stencil uppercase tracking-wider text-sm transition-colors shadow-[var(--shadow-stamp)]"
+                    onClick={loadMore}
+                    disabled={loading}
+                    className="px-6 py-3 rounded-md border-2 border-foreground/15 bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground font-stencil uppercase tracking-wider text-sm transition-colors shadow-[var(--shadow-stamp)] disabled:opacity-60"
                   >
-                    Show more cars
-                    <span className="ml-2 opacity-70 normal-case font-sans">
-                      ({filtered.length - visible} left)
-                    </span>
+                    {loading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+                      </span>
+                    ) : (
+                      <>
+                        Show more cars
+                        <span className="ml-2 opacity-70 normal-case font-sans">
+                          ({total - cars.length} left)
+                        </span>
+                      </>
+                    )}
                   </button>
-                </div>
-              )}
+                ) : loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : null}
+              </div>
             </>
           )}
         </div>
