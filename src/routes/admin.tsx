@@ -513,8 +513,8 @@ function AdminPage() {
           <Button variant="secondary" onClick={() => onBackfillBatch(25)} disabled={imgBusy}>
             Fetch next 25
           </Button>
-          <Button variant="outline" onClick={refreshMissingCount} disabled={imgBusy}>
-            Refresh count
+          <Button variant="outline" onClick={() => refreshMissingCount()} disabled={imgBusy || countBusy}>
+            {countBusy ? "Checking…" : "Refresh count"}
           </Button>
         </div>
         {imgStatus && <p className="text-sm text-muted-foreground mt-3">{imgStatus}</p>}
