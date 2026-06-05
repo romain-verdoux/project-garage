@@ -6,6 +6,7 @@ import { Check, X } from "lucide-react";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars, importAllFromWikipedia } from "@/lib/admin-scrape.functions";
 import { listCarsAdmin, deleteCarById, updateCarField, type AdminCar } from "@/lib/cars-public.functions";
 import { backfillCarImages, countMissingImages } from "@/lib/image-backfill.functions";
+import { estimateMissingPrices, countMissingPrices } from "@/lib/price-estimate.functions";
 import { CAR_TYPES, DECADES } from "@/data/cars";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
