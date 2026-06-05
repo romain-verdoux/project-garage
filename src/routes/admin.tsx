@@ -147,18 +147,30 @@ function AdminPage() {
   const [imgBusy, setImgBusy] = useState(false);
   const [imgStatus, setImgStatus] = useState<string>("");
   const [imgRemaining, setImgRemaining] = useState<number | null>(null);
+  const [countBusy, setCountBusy] = useState(false);
 
-  const refreshMissingCount = useCallback(async () => {
-    try {
-      const { remaining } = await checkMissing();
-      setImgRemaining(remaining);
-    } catch {
-      /* ignore */
-    }
-  }, [checkMissing]);
+  const refreshMissingCount = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      setCountBusy(true);
+      try {
+        const { remaining } = await checkMissing();
+        setImgRemaining(remaining);
+        if (!opts?.silent) {
+          toast.success(`${remaining} cars still missing an image`);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to refresh count";
+        toast.error(msg);
+        setImgStatus(msg);
+      } finally {
+        setCountBusy(false);
+      }
+    },
+    [checkMissing],
+  );
 
   useEffect(() => {
-    refreshMissingCount();
+    refreshMissingCount({ silent: true });
   }, [refreshMissingCount]);
 
   const onBackfillBatch = useCallback(
