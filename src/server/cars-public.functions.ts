@@ -99,6 +99,7 @@ export const updateCarField = createServerFn({ method: "POST" })
 export const deleteCarById = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("cars").delete().eq("id", data.id);
     if (error) throw new Error(`Failed to delete car: ${error.message}`);
     return { ok: true };
