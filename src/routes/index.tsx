@@ -156,7 +156,7 @@ function LibraryPage() {
   };
 
   const makeOptions = useMemo(
-    () => facets.makes.map((m) => ({ id: m, label: m })),
+    () => facets.makes.map((m: string) => ({ id: m, label: m })),
     [facets.makes],
   );
 
