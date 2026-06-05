@@ -190,7 +190,32 @@ const netCarShowAdapter: SiteAdapter = {
       onlyMainContent: false,
       waitFor: 3000,
     });
-    return extractLinks(result).filter(netCarShowAdapter.isDetailUrl);
+    const all = extractLinks(result).filter(netCarShowAdapter.isDetailUrl);
+    // If the input is a brand page (/<make>/), scope discovery to that brand
+    // so we don't pull in "Latest" / "Eye candy" cars from other makes.
+    try {
+      const input = new URL(url);
+      const parts = input.pathname.split("/").filter(Boolean);
+      if (parts.length === 1) {
+        const brand = parts[0].toLowerCase();
+        return Array.from(
+          new Set(
+            all.filter((u) => {
+              try {
+                return (
+                  new URL(u).pathname.split("/").filter(Boolean)[0]?.toLowerCase() === brand
+                );
+              } catch {
+                return false;
+              }
+            }),
+          ),
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+    return all;
   },
   extractionHint:
     "This is a NetCarShow.com model page (press / spec page, not a car for sale). " +
