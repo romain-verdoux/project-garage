@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+// supabaseAdmin is imported dynamically inside each handler so this file
+// stays free of top-level server-only imports (client-reachable via routes).
 import type { Car, CarType, Decade, Difficulty, CostLevel } from "@/data/cars";
 import fallbackImg from "@/assets/hero-garage.jpg";
 
@@ -49,6 +50,7 @@ const CAR_COLUMNS =
   "id,slug,name,make,image_url,type,price,year,decade,history,difficulty_stars,parts_to_find,cost_of_parts,reliability_stars,mechanical_difficulty,electronic_difficulty,known_defects";
 
 export const listCars = createServerFn({ method: "GET" }).handler(async (): Promise<Car[]> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("cars")
     .select(CAR_COLUMNS)
@@ -64,6 +66,7 @@ export const listCarsPage = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }): Promise<Car[]> => {
     const { offset, limit } = data;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("cars")
       .select(CAR_COLUMNS)
@@ -84,6 +87,7 @@ export const updateCarField = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("cars")
       .update({ [data.field]: data.value } as any)
@@ -95,6 +99,7 @@ export const updateCarField = createServerFn({ method: "POST" })
 export const deleteCarById = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("cars").delete().eq("id", data.id);
     if (error) throw new Error(`Failed to delete car: ${error.message}`);
     return { ok: true };
@@ -112,6 +117,7 @@ export type AdminCar = {
 
 export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
   async (): Promise<AdminCar[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("cars")
       .select("id,name,make,type,price,year,decade")
@@ -125,6 +131,7 @@ export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
 export const getCarBySlug = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Car | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("cars")
       .select(CAR_COLUMNS)
