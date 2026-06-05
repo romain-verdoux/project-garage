@@ -220,7 +220,8 @@ function AdminPage() {
 
   useEffect(() => {
     refreshMissingCount({ silent: true });
-  }, [refreshMissingCount]);
+    refreshMissingPrices({ silent: true });
+  }, [refreshMissingCount, refreshMissingPrices]);
 
   const onBackfillBatch = useCallback(
     async (batchSize: number) => {
