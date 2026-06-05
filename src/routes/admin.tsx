@@ -482,6 +482,33 @@ function AdminPage() {
         </TabsContent>
       </Tabs>
 
+      {/* ── Image backfill ── */}
+      <section className="mt-12 rounded-lg border bg-card p-6">
+        <h2 className="font-display text-xl mb-2">Backfill car images</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          For every car missing a picture, tries Wikipedia first (free, license-safe),
+          then falls back to Google Images via Firecrawl. Run in batches to keep things responsive.
+          {imgRemaining !== null && (
+            <>
+              {" "}
+              <strong className="text-foreground">{imgRemaining}</strong> cars still need an image.
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => onBackfillBatch(10)} disabled={imgBusy}>
+            {imgBusy ? "Working…" : "Fetch next 10"}
+          </Button>
+          <Button variant="secondary" onClick={() => onBackfillBatch(25)} disabled={imgBusy}>
+            Fetch next 25
+          </Button>
+          <Button variant="outline" onClick={refreshMissingCount} disabled={imgBusy}>
+            Refresh count
+          </Button>
+        </div>
+        {imgStatus && <p className="text-sm text-muted-foreground mt-3">{imgStatus}</p>}
+      </section>
+
       {/* ── Car library management ── */}
       <section className="mt-16">
         <div className="flex items-center justify-between mb-4">
