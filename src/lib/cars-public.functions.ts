@@ -105,6 +105,15 @@ export const deleteCarById = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteCarBySlug = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("cars").delete().eq("slug", data.slug);
+    if (error) throw new Error(`Failed to delete car: ${error.message}`);
+    return { ok: true };
+  });
+
 export type AdminCar = {
   id: string;
   name: string;
