@@ -569,6 +569,39 @@ function AdminPage() {
         {imgStatus && <p className="text-sm text-muted-foreground mt-3">{imgStatus}</p>}
       </section>
 
+      {/* ── Price estimation ── */}
+      <section className="mt-12 rounded-lg border bg-card p-6">
+        <h2 className="font-display text-xl mb-2">Estimate missing prices</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Uses Lovable AI to estimate a current US market value (USD) for each car with
+          no price. Wikipedia-imported cars come in with price = 0; this fills them in.
+          Estimates are rough — edit any value in the table below to override.
+          {priceRemaining !== null && (
+            <>
+              {" "}
+              <strong className="text-foreground">{priceRemaining}</strong> cars still need a price.
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => onEstimateBatch(10)} disabled={priceBusy}>
+            {priceBusy ? "Working…" : "Estimate next 10"}
+          </Button>
+          <Button variant="secondary" onClick={() => onEstimateBatch(25)} disabled={priceBusy}>
+            Estimate next 25
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => refreshMissingPrices()}
+            disabled={priceBusy || priceCountBusy}
+          >
+            {priceCountBusy ? "Checking…" : "Refresh count"}
+          </Button>
+        </div>
+        {priceStatus && <p className="text-sm text-muted-foreground mt-3">{priceStatus}</p>}
+      </section>
+
+
       {/* ── Car library management ── */}
       <section className="mt-16">
         <div className="flex items-center justify-between mb-4">
