@@ -87,6 +87,7 @@ export const updateCarField = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("cars")
       .update({ [data.field]: data.value } as any)
