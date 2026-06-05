@@ -181,7 +181,6 @@ function AdminPage() {
           `Batch done: ${res.succeeded}/${res.processed} priced · ${res.remaining} cars still missing prices.`,
         );
         toast.success(`Priced ${res.succeeded} cars`);
-        loadCars();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Estimate failed";
         setPriceStatus(msg);
