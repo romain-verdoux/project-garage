@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
+import { Check, X } from "lucide-react";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars, importAllFromWikipedia } from "@/lib/admin-scrape.functions";
 import { listCarsAdmin, deleteCarById, updateCarField, type AdminCar } from "@/lib/cars-public.functions";
 import { backfillCarImages, countMissingImages } from "@/lib/image-backfill.functions";
