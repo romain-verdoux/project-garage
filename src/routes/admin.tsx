@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/useAuth";
 import { scrapeCarFromUrl, discoverCarUrls, scrapeManyCars } from "@/server/cars.functions";
 import { importAllFromWikipedia } from "@/server/wikipedia-bulk.functions";
-import { listCarsAdmin, deleteCarById, updateCarField, type AdminCar } from "@/server/cars-public.functions";
+import { listCarsAdmin, deleteCarById, updateCarField, type AdminCar } from "@/lib/cars-public.functions";
 import { CAR_TYPES, DECADES } from "@/data/cars";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

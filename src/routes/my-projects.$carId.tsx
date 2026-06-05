@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate, notFound, useRouter } from "@tanstack/react-router";
-import { getCarBySlug } from "@/server/cars-public.functions";
+import { getCarBySlug } from "@/lib/cars-public.functions";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { CarDetailView } from "@/components/CarDetailView";
 

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Trash2, Bell } from "lucide-react";
-import { listCars } from "@/server/cars-public.functions";
+import { listCars } from "@/lib/cars-public.functions";
 import type { Car } from "@/data/cars";
 import { projectsStore, useProjects } from "@/lib/projects-store";
 import { toast } from "sonner";
