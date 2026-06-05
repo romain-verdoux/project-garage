@@ -122,6 +122,7 @@ export type AdminCar = {
   price: number;
   year: number;
   decade: string;
+  image_url: string | null;
 };
 
 export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
@@ -129,7 +130,7 @@ export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("cars")
-      .select("id,name,make,type,price,year,decade")
+      .select("id,name,make,type,price,year,decade,image_url")
       .order("name", { ascending: true })
       .limit(2000);
     if (error) throw new Error(`Failed to load cars: ${error.message}`);
