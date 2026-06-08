@@ -181,13 +181,22 @@ export type AdminCar = {
 export const listCarsAdmin = createServerFn({ method: "GET" }).handler(
   async (): Promise<AdminCar[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("cars")
-      .select("id,name,make,type,price,year,decade,image_url")
-      .order("name", { ascending: true })
-      .limit(2000);
-    if (error) throw new Error(`Failed to load cars: ${error.message}`);
-    return data as AdminCar[];
+    // Page through results to bypass the 1000-row PostgREST cap so the admin
+    // table reflects every car (matches what the backfill counters see).
+    const all: AdminCar[] = [];
+    const PAGE = 1000;
+    for (let from = 0; from < 100_000; from += PAGE) {
+      const { data, error } = await supabaseAdmin
+        .from("cars")
+        .select("id,name,make,type,price,year,decade,image_url")
+        .order("name", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(`Failed to load cars: ${error.message}`);
+      const rows = (data ?? []) as AdminCar[];
+      all.push(...rows);
+      if (rows.length < PAGE) break;
+    }
+    return all;
   },
 );
 
