@@ -34,7 +34,7 @@ export const Route = createFileRoute("/my-projects/$carId")({
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
         <h1 className="font-display text-3xl mb-3">Something went wrong</h1>
-        <p className="text-muted-foreground mb-6">{error.message}</p>
+        <p className="text-muted-foreground mb-6">{error instanceof Error ? error.message : String(error)}</p>
         <button
           onClick={() => { router.invalidate(); reset(); }}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
